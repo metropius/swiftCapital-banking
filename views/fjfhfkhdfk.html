@@ -1,0 +1,3732 @@
+with every other codes and functionalities intact and my user schema like this 
+
+const mongoose = require('mongoose');
+const validator = require('validator');
+
+const userSchema = new mongoose.Schema({
+  isSuspended: {
+    type: Boolean,
+    default: false,
+  },
+  firstname: {
+    type: String,
+  },
+  midname: {
+    type: String,
+  },
+  lastname: {
+    type: String,
+  },
+   username: {
+    type: String,
+    unique: true,
+  },
+  phone: {
+    type: String,
+  },
+  email: {
+    type: String,
+    unique: true,
+    lowercase: true,
+    required: [true, 'Please enter an email'], // Fixed validator syntax
+  },
+  limit: {
+    type: String,
+    default: "500,000,00"
+  },
+  country: {
+    type: String
+  },
+  ref_no: {
+    type: String,
+    default: "1234567890"
+  },
+  postal: {
+    type: String,
+    default: "postal code"
+  },
+  address: {
+    type: String,
+    default: "your address"
+  },
+  state: {
+    type: String,
+    default: "your state"
+  },
+   account_no: {
+    type: String,
+    default: "your account number"
+  },
+  currency: {
+    type: String,
+    default: "$"
+  },
+  Dob: {
+    type: String,
+  },
+  city: {
+    type: String,
+    default: "your city"
+  },
+  accounttype: {
+    type: String,
+  },
+  password: {
+    type: String,
+    required: true, // Added required
+  },
+  image: {
+    type: String,
+  },
+  balance: {
+    type: String,
+    default: "0.00"
+  },
+  btcBalance: {
+  type: Number,
+  default: 0
+},
+  total_deposit: {
+    type: String,
+    default: "0.00"
+  },
+  gender: {
+    type: String,
+  },
+  fees: {
+    type: String,
+    default: "0.00"
+  },
+  
+  pending: {
+    type: String,
+    default: "0.00"
+  },
+  pin: {
+    type: String,
+    required: true, // Added required
+  },
+  cardBal: {
+    type: String,
+    default: "0.00"
+  },
+  cardNumb: {
+    type: String,
+    default: "xxxxxxxxxxxx"
+  },
+  card_cvv: {
+    type: String,
+    default: "xxxx"
+  },
+  card_exp: {
+    type: String,
+    default: "xxxxxxxxxxxxxx"
+  },
+  card_status: {
+    type: String,
+    default: "Not Active"
+  },
+  card_type: {
+    type: String,
+    default: "xxxxxxxxxxxx"
+  },
+  otp: {
+    type: String, 
+    default: null,
+  },
+  otpExpires: {
+    type: Date,
+    default: null,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationCode: {
+    type: String,
+    default: null,
+  },
+  kycVerified: {
+    type: Boolean,
+    default: false,
+  },
+  verifiedStatus: {
+    type: String,
+    default: 'not Verified!',
+  },
+  verificationToken: {
+    type: String,
+    default: null,
+  },
+  verificationTokenExpires: {
+    type: Date,
+    default: null,
+  },
+   resetPasswordToken: {
+    type: String,
+    default: null
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null
+  },
+  Depositdetails: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'details'
+  },
+  transfers: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'transferMoney'
+  },
+  cards: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'card'
+  },
+  loans: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'loan'
+  },
+  tickets: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'ticket'
+  },
+  deposits: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'deposit'
+  },
+    wallets: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Wallet'
+  }],
+   kyc: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Verification',
+    default: null
+  },
+  otpSuspended: {
+    type: Boolean,
+    default: false
+  },
+  role: {
+    type: Number,
+    default: 0
+  }
+}, { timestamps: true });
+
+// Login static method (unchanged - plain text comparison)
+userSchema.statics.login = async function (email, password) {
+  const user = await this.findOne({ email });
+  if (!user) {
+    throw Error('incorrect email');
+  }
+
+  if (user.isSuspended) {
+    throw Error('Your account is suspended. If you believe this is a mistake, please contact support at support@swiftcaptial.com');
+  }
+  if (!user.isVerified) {
+    throw Error('Your account is not verified. Please check your email and click the verification link, or create a new account.');
+  }
+  // Direct string comparison for passwords
+  if (password !== user.password) {
+    throw Error('incorrect password');
+  }
+  return user;
+};
+
+const User = mongoose.model('user', userSchema);
+
+module.exports = User;
+
+and my admin fetching all user routes like this
+
+router.get('/adminiRoute',adminController.adminPage );
+
+router.post('/suspendUser/:id', adminController.suspendUser);
+
+and viewUser, editUser, suspend and  delete user routes like this
+
+router.get('/viewUser/:id',adminController.viewUser );
+
+router.get('/editUser/:id',adminController.editUser );
+
+router.put('/editUser/:id', adminController.editUser_post);
+
+router.delete('/deleteUser/:id', adminController.deletePage);
+
+and with their controllers like this
+
+module.exports.adminPage = async(req, res) =>{
+        let perPage = 100;
+        let page = req.query.page || 1;
+    
+        try {
+          const user = await User.aggregate([ { $sort: { createdAt: -1 } } ])
+            .skip(perPage * page - perPage)
+            .limit(perPage)
+            .exec(); 
+          // const count = await User.count();
+    
+          res.render('adminDashboard',{user});
+    
+        } catch (error) {
+          console.log(error);
+        } 
+    } 
+module.exports.viewUser = async(req, res) =>{
+    try {
+        const user = await User.findOne({ _id: req.params.id })
+        res.render("viewUser",{
+          user
+        })
+    
+      } catch (error) {
+        console.log(error);
+      }
+    
+    }
+
+    module.exports.editUser = async(req, res) =>{
+      try {
+          const user = await User.findOne({ _id: req.params.id })
+      
+          res.render('editUser', {
+            user
+          })
+      
+        } catch (error) {
+          console.log(error);
+        }
+  }
+
+module.exports.editUser_post = async(req, res) =>{
+    try {
+        await User.findByIdAndUpdate(req.params.id,{
+          firstname: req.body.firstname,
+          midname: req.body.midname,
+          lastname: req.body.lastname,
+          tel: req.body.tel,
+          email: req.body.email,
+          limit: req.body.limit,
+          ref_no: req.body.ref_no,
+          postal: req.body.postal,
+          address: req.body.address,
+          state: req.body.state,
+          currency: req.body.currency,
+          account_no: req.body.account_no,
+          Dob: req.body.Dob,
+          account: req.body.account,
+          password: req.body.password,
+          balance: req.body.balance,
+          gender: req.body.gender,
+          bank_name:req.body.bank_name,
+          account_name:req.body.account_name,
+          fees:req.body.fees,
+          sortcode:req.body.sortcode,
+          deacc_no:req.body.deacc_no,
+          deacc_bank:req.body.deacc_bank,
+          deacc_swift:req.body.deacc_swift,
+          deacc_name:req.body.deacc_name,
+          pending:req.body.pending,
+          de_wallet:req.body.de_wallet,
+          cardBal:req.body.cardBal,
+          cardNumb:req.body.cardNumb,
+          card_cvv:req.body.card_cvv,
+          card_exp:req.body.card_exp,
+          card_status:req.body.card_status,
+          card_type:req.body.card_type,
+          total_deposit:req.body.total_deposit,
+          updatedAt: Date.now()
+        });
+
+      
+          //  if(User){
+          // sendEmail(req.body.fullname,req.body.email, req.body.available, req.body.balance, req.body.bonus,req.body.widthdrawBalance, req.body.profit, req.body.totalDeposit,req.body.totalWidthdraw,req.body.signal, req.body.verifiedStatus,req.body.account, req.body.session )
+          // }else{
+          //   console.log(error);
+          // }
+        await res.redirect(`/editUser/${req.params.id}`);
+        console.log('redirected');
+      } catch (error) {
+        console.log(error);
+      }
+    
+}
+
+module.exports.suspendUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      req.flash('error', 'User not found');
+      return res.redirect('/adminRoute');
+    }
+
+    user.isSuspended = !user.isSuspended;
+    await user.save();
+
+    await sendSuspensionEmail(user.email, user.fullname, user.isSuspended);
+
+    req.flash('success', `User ${user.isSuspended ? 'suspended' : 'reactivated'} successfully`);
+    res.redirect('/adminRoute');
+  } catch (error) {
+    console.error('Error in suspendUser:', error);
+    req.flash('error', 'Error updating user suspension status');
+    res.redirect('/adminRoute');
+  }
+};
+
+with suspend email templates like this
+
+// Email function for suspension notification
+const sendSuspensionEmail = async (email, fullname, isSuspended) => {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'digitaltopfigmarket@gmail.com',
+      pass: 'pnungxkemhxruqhc'
+    }
+  });
+
+  const signInUrl = process.env.BASE_URL;
+  const status = isSuspended ? 'suspended' : 'reactivated';
+
+  const mailOptions = {
+    from: 'support@digital-topfigmarkets.com',
+    to: email,
+    subject: `Account ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+    html: `
+      <div style="background-color: #1C2526; padding: 20px; font-family: Arial, sans-serif; color: #F5F6F5; text-align: center; max-width: 600px; margin: 0 auto;">
+        <!-- Header -->
+        <div style="background-color: #2E3A3B; padding: 15px; border-bottom: 2px solid #F5F6F5;">
+          <img src="https://ci3.googleusercontent.com/meips/ADKq_NbWvndY7ipL-Nw8Hmdp3YA_hWPJyT9lZ-TMEC-sIUnu2jcyRInbm0Y0JFSMU-KNB5MRgIwNfml_cVYKSqj0543VjAghNO6rZA=s0-d-e1-ft#https://digital-figtopmarkets.com/images/email.png" alt="Digital Figtop Logo" style="max-width: 150px; height: auto; display: block; margin: 0 auto;">
+          <h2 style="color: #F5F6F5; margin: 10px 0 0; font-size: 24px;">Account ${status.charAt(0).toUpperCase() + status.slice(1)}</h2>
+        </div>
+        <!-- Body -->
+        <div style="padding: 20px; font-size: 16px; line-height: 1.5;">
+          <h3 style="color: #F5F6F5; font-size: 18px;">Hello, ${fullname}</h3>
+          <p style="color: #F5F6F5;">Your account has been ${status}.</p>
+          <p style="color: #F5F6F5; font-weight: bold;">${
+            isSuspended
+              ? 'If you believe this is a mistake, please contact support.'
+              : 'You can now log in and access all features.'
+          }</p>
+          <hr style="border: 1px solid #4A4A4A; margin: 20px 0;">
+          <p style="color: #F5F6F5; text-align: left; margin: 10px 0;"><strong>Email:</strong> ${email}</p>
+          <hr style="border: 1px solid #4A4A4A; margin: 20px 0;">
+          <a href="${signInUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3F3EED; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">Sign In</a>
+          <p style="color: #F5F6F5; font-size: 14px;">Status updated on: ${new Date().toLocaleDateString()}</p>
+        </div>
+        <!-- Footer -->
+        <div style="background-color: #2E3A3B; padding: 15px; border-top: 2px solid #F5F6F5; font-size: 14px;">
+          <p style="margin: 0 0 10px; color: #F5F6F5;">© ${new Date().getFullYear()} Digital Figtop. All rights reserved.</p>
+          <div style="display: flex; justify-content: center; gap: 20px;">
+            <a href="mailto:support@digital-topfigmarkets.com" style="color: #4A90E2; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+              <img src="https://img.icons8.com/ios-filled/24/4A90E2/email.png" alt="Email Icon" style="width: 20px; height: 20px;">
+              <span>Contact Support</span>
+            </a>
+            <a href="digital-topfigmarkets.com" style="color: #4A90E2; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+              <img src="https://img.icons8.com/ios-filled/24/4A90E2/globe.png" alt="Website Icon" style="width: 20px; height: 20px;">
+              <span>Visit Website</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Suspension email sent to:', email);
+  } catch (error) {
+    console.error('Error sending suspension email:', error);
+    throw error; // Re-throw to handle in suspendUser
+  }
+};
+
+module.exports.deletePage = async(req, res) =>{
+  try {
+    await User.deleteOne({ _id: req.params.id });
+      res.redirect("/adminiRoute")
+    } catch (error) {
+      console.log(error);
+    }
+}
+
+with my 1st admin dashboard page like this
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="" content="">
+    <title>swiftcaptial |  AdminDashboard</title>
+    <meta name="description" content="Swift and Secure Money Transfer to any UK bank account will become a breeze with swiftcaptial." />
+    <link rel="shortcut icon" href="storage/app/public/photos/TydZYFQSbyrBue0oZ1BQzOAr8y3J4VixErlONeNz.png" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.documentElement.style.setProperty('--primary-color', '#0ea5e9');
+        document.documentElement.style.setProperty('--primary-color-dark', '#0369a1');
+        document.documentElement.style.setProperty('--primary-color-light', '#38bdf8');
+        document.documentElement.style.setProperty('--primary-color-lightest', '#38bdf8');
+        document.documentElement.style.setProperty('--secondary-color', '#14b8a6');
+        document.documentElement.style.setProperty('--secondary-color-dark', '#0f766e');
+        document.documentElement.style.setProperty('--secondary-color-light', '#5eead4');
+        document.documentElement.style.setProperty('--accent-color', '#ec4899');
+        document.documentElement.style.setProperty('--text-color', '#111827');
+        document.documentElement.style.setProperty('--bg-color', '#f9fafb');
+        document.documentElement.style.setProperty('--sidebar-bg-color', '#1e293b');
+        document.documentElement.style.setProperty('--sidebar-text-color', '#ffffff');
+        document.documentElement.style.setProperty('--card-bg-color', '#ffffff');
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {50:'#38bdf8',100:'#38bdf8',200:'#38bdf8',300:'#38bdf8',400:'#38bdf8',500:'#0ea5e9',600:'#0ea5e9',700:'#0369a1',800:'#0369a1',900:'#0369a1'},
+                        secondary: {50:'#5eead4',100:'#5eead4',200:'#5eead4',300:'#5eead4',400:'#5eead4',500:'#14b8a6',600:'#14b8a6',700:'#0f766e',800:'#0f766e',900:'#0f766e'},
+                        accent: {50:'#fdf2f8',100:'#fce7f3',200:'#fbcfe8',300:'#f9a8d4',400:'#f472b6',500:'#ec4899',600:'#db2777',700:'#be185d',800:'#9d174d',900:'#831843'}
+                    },
+                    boxShadow: {'soft':'0 2px 15px -3px rgba(0,0,0,0.07), 0 10px 20px -2px rgba(0,0,0,0.04)'},
+                    animation: {'pulse-slow':'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'}
+                }
+            }
+        }
+    </script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @font-face {font-family:Graphik;font-weight:400;src:url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf");}
+        @font-face {font-family:Graphik;font-weight:500;src:url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf");}
+        @font-face {font-family:Graphik;font-weight:700;src:url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikMedium.otf");}
+        @font-face {font-family:Graphik;font-weight:800;src:url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikBold.otf ");}
+        @font-face {font-family:Graphik;font-weight:900;src:url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikMedium.otf");}
+        body {font-family:"Graphik",sans-serif;}
+
+        .page-loading{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;background:#fff;visibility:hidden;z-index:9999;transition:all .4s .2s ease-in-out}
+        .page-loading.active{opacity:1;visibility:visible}
+        .page-loading-inner{position:absolute;top:50%;left:0;width:100%;text-align:center;transform:translateY(-50%);transition:opacity .2s ease-in-out;opacity:0}
+        .page-loading.active>.page-loading-inner{opacity:1}
+        .loading-container{display:flex;align-items:center;justify-content:center;flex-direction:column}
+        .loading-animation{display:flex;align-items:center;justify-content:center;width:80px;height:80px;margin-bottom:1rem;position:relative}
+        .loading-animation .circle{position:absolute;width:100%;height:100%;border-radius:50%;border:4px solid transparent;mix-blend-mode:overlay;animation:rotateCircle 1.5s linear infinite}
+        .loading-animation .circle:nth-child(1){border-top-color:var(--primary-color);animation-delay:0s}
+        .loading-animation .circle:nth-child(2){border-right-color:var(--primary-color-light);animation-delay:.2s}
+        .loading-animation .circle:nth-child(3){border-bottom-color:var(--secondary-color);animation-delay:.4s}
+        .loading-animation .circle:nth-child(4){border-left-color:var(--primary-color-lightest);animation-delay:.6s}
+        .loading-animation .core{width:20px;height:20px;border-radius:50%;background:linear-gradient(45deg,var(--primary-color-light),var(--primary-color-dark));box-shadow:0 0 15px rgba(59,130,246,.5);animation:pulse 1s ease-in-out infinite alternate}
+        .page-loading .text{color:var(--primary-color);font-weight:500;letter-spacing:.05em;margin-top:.5rem;font-size:.875rem;background:linear-gradient(90deg,var(--primary-color-dark),var(--primary-color-light),var(--primary-color-dark));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gradient 2s linear infinite}
+        @keyframes rotateCircle{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        @keyframes pulse{from{transform:scale(.8);opacity:.8}to{transform:scale(1.2);opacity:1}}
+        @keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+        ::-webkit-scrollbar{width:8px;height:8px}
+        ::-webkit-scrollbar-track{background:#f1f5f9}
+        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+        ::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+    </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="swiftcaptial">
+    <link rel="icon" sizes="512x512" href="/images/icons/icon-512x512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="swiftcaptial">
+    <link rel="apple-touch-icon" href="/images/icons/icon-512x512.png">
+    <link href="/images/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1242x2208.png" media="(device-width: 621px) and (device-height: 1104px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1668x2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1668x2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/images/icons/icon-512x512.png">
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/serviceworker.js', {scope: '.'})
+                .then(() => console.log('Service Worker Registered'))
+                .catch(err => console.log('Service Worker Error:', err));
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+
+    <div class="page-loading active">
+        <div class="page-loading-inner">
+            <div class="loading-container">
+                <div class="loading-animation">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="core"></div>
+                </div>
+                <div class="text">swiftcaptial Banking</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden" x-data="{sidebarOpen: false, mobileMenuOpen: false, userDropdownOpen: false, notificationsOpen: false}">
+
+        <div class="hidden md:flex md:w-64 md:flex-col bg-white h-full border-r border-gray-200 shadow-sm">
+            <div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
+                <div class="flex items-center justify-center flex-shrink-0 px-4 mb-6">
+                    <a href="/" class="flex items-center">
+                        <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-10 w-auto">
+                    </a>
+                </div>
+
+                <div class="px-4 mb-6">
+                    <div class="bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-3">
+                            <div class="flex-shrink-0 mr-3">
+                                <img src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                     alt="<%= user.firstname %> <%= user.lastname %>"
+                                     class="h-10 w-10 rounded-full object-cover border-2 border-primary-100">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    <%= user.firstname %> <%= user.lastname %>
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    ID: <%= user._id %>
+                                </p>
+                            </div>
+                        </div>
+
+                        
+                        <div class="flex space-x-2">
+                            
+                            <a href="/logout" class="flex-1 inline-flex justify-center items-center px-2.5 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-primary-600 hover:bg-primary-700">
+                                <i data-lucide="log-out" class="h-3 w-3 mr-1"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="flex-1 px-4 space-y-1">
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">Main Menu</p>
+                    <a href="/adminiRoute" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="home" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Dashboard
+                    </a>
+                   
+                    <a href="/all-cards" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="credit-card" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All Cards
+                    </a>
+
+                     <a href="/wallet" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="wallet" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All wallets
+                    </a>
+
+     
+                    <a href="/allTransfer" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg bg-primary-50 text-black border-l-4 border-primary-500 pl-2">
+                        <i data-lucide="send" class="mr-3 h-5 w-5 text-black"></i>
+                        All  Transfer
+                    </a>
+                  
+                    <a href="/allFunding" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="download" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All Deposit
+                    </a>
+
+                
+                    <a href="/allLoans" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="credit-card" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All Loan 
+                    </a>
+                    <a href="/allRefund" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="receipt" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All IRS Tax Refund
+                    </a>
+                   
+                    
+                    <a href="/allTickets" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="help-circle" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        All Support Ticket
+                    </a>
+                </nav>
+            </div>
+
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i data-lucide="shield-check" class="h-4 w-4 text-green-500 mr-2"></i>
+                        <span class="text-xs text-gray-500">Secure Banking</span>
+                    </div>
+                    <span class="text-xs text-gray-400">v1.2.0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col flex-1 overflow-hidden">
+
+            <header class="bg-white shadow-sm z-20">
+                <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center md:hidden">
+                        <button 
+                            @click="sidebarOpen = false; mobileMenuOpen = !mobileMenuOpen" 
+                            type="button" 
+                            class="text-gray-500 hover:text-gray-600 focus:outline-none"
+                            aria-label="Toggle menu">
+                            <i data-lucide="menu" class="h-6 w-6"></i>
+                        </button>
+                        <a href="/adminRoutes" class="ml-4">
+                            <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-8 w-auto">
+                        </a>
+                    </div>
+
+                    <div class="hidden md:flex md:flex-1 md:items-center">
+                        <div class="text-sm text-gray-600 flex items-center">
+                            <i data-lucide="calendar" class="h-4 w-4 mr-2 text-gray-400"></i>
+                            <span id="current-date">Saturday, January 17, 2026</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="hidden md:flex items-center px-3 py-1.5 bg-primary-50 rounded-full">
+                            <i data-lucide="wallet" class="h-4 w-4 text-gray-900 mr-2"></i>
+                            <span class="text-sm font-medium text-gray-900">
+                                <%= user.currency %> <%= user.balance %>
+                            </span>
+                        </div>
+
+                        <div class="relative">
+                            <button 
+                                @click="userDropdownOpen = !userDropdownOpen; notificationsOpen = false" 
+                                class="flex items-center max-w-xs text-sm rounded-full focus:outline-none">
+                                <img 
+                                    class="h-8 w-8 rounded-full object-cover border-2 border-gray-200" 
+                                    src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                    alt="<%= user.firstname %> <%= user.lastname %>">
+                            </button>
+
+                            <div 
+                                x-show="userDropdownOpen" 
+                                @click.away="userDropdownOpen = false" 
+                                class="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" 
+                                x-transition>
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-900"><%= user.firstname %> <%= user.lastname %></p>
+                                    <p class="text-xs text-gray-500 mt-1">ID: <%= user._id %></p>
+                                </div>
+                            
+                                <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                                    <i data-lucide="log-out" class="h-4 w-4 mr-3 text-gray-500"></i> Sign Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div x-show="mobileMenuOpen" class="fixed inset-0 flex items-center justify-center z-40 md:hidden" x-transition>
+                <div class="fixed inset-0 bg-black bg-opacity-50" @click="mobileMenuOpen = false"></div>
+                <div class="relative w-11/12 max-w-md bg-white rounded-2xl shadow-2xl p-5 z-50">
+                    <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-500" @click="mobileMenuOpen = false">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+
+                    <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
+                        <div class="flex-shrink-0 mr-3">
+                            <img src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                 class="h-12 w-12 rounded-full object-cover border-2 border-primary-100">
+                        </div>
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-900"><%= user.firstname %> <%= user.lastname %></h2>
+                            <p class="text-sm text-gray-500">Account: <%= user._id %></p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-5">
+                        <h2 class="text-xl font-bold text-gray-800">Banking Menu</h2>
+                        <p class="text-sm text-gray-500">Select an option to continue</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <a href="/adminRoutes" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="home" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Home</span>
+                            </div>
+                        </a>
+
+                       
+
+                        <a href="/all-cards" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="credit-card" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700"> All Cards</span>
+                            </div>
+                        </a>
+
+                          <a href="/wallet" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="wallet" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700"> All wallets</span>
+                            </div>
+                        </a>
+
+                        <a href="/allTransfer" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="send" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">All Transfer</span>
+                            </div>
+                        </a>
+
+
+                        <a href="/allFunding" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="download" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">All Deposit</span>
+                            </div>
+                        </a>
+
+                        <a href="/allLoans" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="credit-card" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">All Loan</span>
+                            </div>
+                        </a>
+
+                        <a href="/allRefund" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="receipt" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">All IRS Refund</span>
+                            </div>
+                        </a>
+
+                       
+
+                        <a href="/allTickets" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="help-circle" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">All Support</span>
+                            </div>
+                        </a>
+
+                        <a href="/logout" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-accent-50 to-accent-100 hover:from-accent-100 hover:to-accent-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="log-out" class="h-5 w-5 text-accent-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Logout</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fixed bottom-0 left-0 right-0 md:hidden z-30">
+                <div class="bg-white border-t border-gray-200 shadow-lg rounded-t-3xl mx-2 mb-1">
+                    <div class="flex justify-between items-center px-6 py-3 relative">
+                        <a href="/adminRoutes" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="home" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">Home</span>
+                        </a>
+
+                       
+
+                        <div class="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-0">
+                            <button @click="mobileMenuOpen = true" class="bg-gradient-to-r from-primary-600 to-primary-800 w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                                <i data-lucide="grid" class="h-8 w-8 text-white"></i>
+                            </button>
+                        </div>
+
+                        <a href="/all-cards" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="credit-card" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">All Cards</span>
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+
+            <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
+                <!-- 
+                    ALL PREVIOUS MAIN CONTENT HAS BEEN REMOVED
+                    You can now place any new content here (form, dashboard widgets, etc.)
+                -->
+            </main>
+
+            <footer class="bg-white border-t border-gray-200 hidden md:block">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 md:flex md:items-center md:justify-between">
+                    <div class="flex items-center">
+                        <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-6 w-auto mr-2">
+                        <p class="text-sm text-gray-500">© 2026 swiftcaptial. All rights reserved.</p>
+                    </div>
+                    <div class="flex space-x-6 mt-4 md:mt-0">
+                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
+                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
+                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Contact Support</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+
+    <script>
+document.getElementById('current-date').textContent = 
+    new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+</script>
+    <script>
+        lucide.createIcons();
+
+        window.addEventListener('load', function() {
+            const preloader = document.querySelector('.page-loading');
+            setTimeout(() => {
+                preloader.classList.remove('active');
+                setTimeout(() => preloader.remove(), 500);
+            }, 800);
+        });
+    </script>
+</body>
+</html>
+
+and my second dashboard template like this
+
+<!DOCTYPE html>
+<html>
+<head>
+        <title>Admin Dashboard</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,400;1,700;1,900&amp;display=swap" rel="stylesheet">
+<meta name="theme-color" content="#171717">
+<link rel="stylesheet" href="assets5i/dashboard.css">  
+<link rel="stylesheet" href="assets5i/d.css">  
+<link rel="stylesheet" href="assets0/notify.css">
+<link rel="stylesheet" href="assets0/custom/custom.css">
+ 
+<link rel="stylesheet" href="assets5i/custom/custom.css">  
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+
+<!-- new styles -->
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link rel="stylesheet" href="wp-user/assets5i/dashboard.css">  
+<link rel="stylesheet" href="wp-user/assets5i/d.css">  
+<link rel="stylesheet" href="wp-user/assets0/notify.css">
+<link rel="stylesheet" href="wp-user/assets0/custom/custom.css">
+ 
+<link rel="stylesheet" href="wp-user/assets5i/custom/custom.css">  
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href=" https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.css">
+
+<script src="https://unpkg.com/akar-icons-fonts"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+<!-- end of styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- SweetAlert2 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- Typography CSS -->
+    <link rel="stylesheet" href="css/typography.css">
+    <!-- Style CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Responsive CSS -->
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <link rel="stylesheet" type="text/css" href="nt/ss.css"> 
+    <link rel="stylesheet" type="text/css" href="nt/as.css">  
+    <script type="text/javascript" charset="utf-8" async="" src="https://www.smartsuppchat.com/loader.js?"></script><script type="text/javascript" src="nt/ba.js"></script>
+    
+    <link rel="stylesheet" type="text/css" href="otassets/otfi.css">
+    <script type="text/javascript" src="otassets/otfi.js"></script>
+
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/akar-icons-fonts/src/css/akar-icons.css"><style>@-webkit-keyframes swal2-show{0%{-webkit-transform:scale(.7);transform:scale(.7)}45%{-webkit-transform:scale(1.05);transform:scale(1.05)}80%{-webkit-transform:scale(.95);transform:scale(.95)}100%{-webkit-transform:scale(1);transform:scale(1)}}@keyframes swal2-show{0%{-webkit-transform:scale(.7);transform:scale(.7)}45%{-webkit-transform:scale(1.05);transform:scale(1.05)}80%{-webkit-transform:scale(.95);transform:scale(.95)}100%{-webkit-transform:scale(1);transform:scale(1)}}@-webkit-keyframes swal2-hide{0%{-webkit-transform:scale(1);transform:scale(1);opacity:1}100%{-webkit-transform:scale(.5);transform:scale(.5);opacity:0}}@keyframes swal2-hide{0%{-webkit-transform:scale(1);transform:scale(1);opacity:1}100%{-webkit-transform:scale(.5);transform:scale(.5);opacity:0}}@-webkit-keyframes swal2-animate-success-line-tip{0%{top:1.1875em;left:.0625em;width:0}54%{top:1.0625em;left:.125em;width:0}70%{top:2.1875em;left:-.375em;width:3.125em}84%{top:3em;left:1.3125em;width:1.0625em}100%{top:2.8125em;left:.875em;width:1.5625em}}@keyframes swal2-animate-success-line-tip{0%{top:1.1875em;left:.0625em;width:0}54%{top:1.0625em;left:.125em;width:0}70%{top:2.1875em;left:-.375em;width:3.125em}84%{top:3em;left:1.3125em;width:1.0625em}100%{top:2.8125em;left:.875em;width:1.5625em}}@-webkit-keyframes swal2-animate-success-line-long{0%{top:3.375em;right:2.875em;width:0}65%{top:3.375em;right:2.875em;width:0}84%{top:2.1875em;right:0;width:3.4375em}100%{top:2.375em;right:.5em;width:2.9375em}}@keyframes swal2-animate-success-line-long{0%{top:3.375em;right:2.875em;width:0}65%{top:3.375em;right:2.875em;width:0}84%{top:2.1875em;right:0;width:3.4375em}100%{top:2.375em;right:.5em;width:2.9375em}}@-webkit-keyframes swal2-rotate-success-circular-line{0%{-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}5%{-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}12%{-webkit-transform:rotate(-405deg);transform:rotate(-405deg)}100%{-webkit-transform:rotate(-405deg);transform:rotate(-405deg)}}@keyframes swal2-rotate-success-circular-line{0%{-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}5%{-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}12%{-webkit-transform:rotate(-405deg);transform:rotate(-405deg)}100%{-webkit-transform:rotate(-405deg);transform:rotate(-405deg)}}@-webkit-keyframes swal2-animate-error-x-mark{0%{margin-top:1.625em;-webkit-transform:scale(.4);transform:scale(.4);opacity:0}50%{margin-top:1.625em;-webkit-transform:scale(.4);transform:scale(.4);opacity:0}80%{margin-top:-.375em;-webkit-transform:scale(1.15);transform:scale(1.15)}100%{margin-top:0;-webkit-transform:scale(1);transform:scale(1);opacity:1}}@keyframes swal2-animate-error-x-mark{0%{margin-top:1.625em;-webkit-transform:scale(.4);transform:scale(.4);opacity:0}50%{margin-top:1.625em;-webkit-transform:scale(.4);transform:scale(.4);opacity:0}80%{margin-top:-.375em;-webkit-transform:scale(1.15);transform:scale(1.15)}100%{margin-top:0;-webkit-transform:scale(1);transform:scale(1);opacity:1}}@-webkit-keyframes swal2-animate-error-icon{0%{-webkit-transform:rotateX(100deg);transform:rotateX(100deg);opacity:0}100%{-webkit-transform:rotateX(0);transform:rotateX(0);opacity:1}}@keyframes swal2-animate-error-icon{0%{-webkit-transform:rotateX(100deg);transform:rotateX(100deg);opacity:0}100%{-webkit-transform:rotateX(0);transform:rotateX(0);opacity:1}}body.swal2-toast-shown.swal2-has-input>.swal2-container>.swal2-toast{flex-direction:column;align-items:stretch}body.swal2-toast-shown.swal2-has-input>.swal2-container>.swal2-toast .swal2-actions{flex:1;align-self:stretch;justify-content:flex-end;height:2.2em}body.swal2-toast-shown.swal2-has-input>.swal2-container>.swal2-toast .swal2-loading{justify-content:center}body.swal2-toast-shown.swal2-has-input>.swal2-container>.swal2-toast .swal2-input{height:2em;margin:.3125em auto;font-size:1em}body.swal2-toast-shown.swal2-has-input>.swal2-container>.swal2-toast .swal2-validationerror{font-size:1em}body.swal2-toast-shown>.swal2-container{position:fixed;background-color:transparent}body.swal2-toast-shown>.swal2-container.swal2-shown{background-color:transparent}body.swal2-toast-shown>.swal2-container.swal2-top{top:0;right:auto;bottom:auto;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%)}body.swal2-toast-shown>.swal2-container.swal2-top-end,body.swal2-toast-shown>.swal2-container.swal2-top-right{top:0;right:0;bottom:auto;left:auto}body.swal2-toast-shown>.swal2-container.swal2-top-left,body.swal2-toast-shown>.swal2-container.swal2-top-start{top:0;right:auto;bottom:auto;left:0}body.swal2-toast-shown>.swal2-container.swal2-center-left,body.swal2-toast-shown>.swal2-container.swal2-center-start{top:50%;right:auto;bottom:auto;left:0;-webkit-transform:translateY(-50%);transform:translateY(-50%)}body.swal2-toast-shown>.swal2-container.swal2-center{top:50%;right:auto;bottom:auto;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%)}body.swal2-toast-shown>.swal2-container.swal2-center-end,body.swal2-toast-shown>.swal2-container.swal2-center-right{top:50%;right:0;bottom:auto;left:auto;-webkit-transform:translateY(-50%);transform:translateY(-50%)}body.swal2-toast-shown>.swal2-container.swal2-bottom-left,body.swal2-toast-shown>.swal2-container.swal2-bottom-start{top:auto;right:auto;bottom:0;left:0}body.swal2-toast-shown>.swal2-container.swal2-bottom{top:auto;right:auto;bottom:0;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%)}body.swal2-toast-shown>.swal2-container.swal2-bottom-end,body.swal2-toast-shown>.swal2-container.swal2-bottom-right{top:auto;right:0;bottom:0;left:auto}.swal2-popup.swal2-toast{flex-direction:row;align-items:center;width:auto;padding:.625em;box-shadow:0 0 .625em #d9d9d9;overflow-y:hidden}.swal2-popup.swal2-toast .swal2-header{flex-direction:row}.swal2-popup.swal2-toast .swal2-title{justify-content:flex-start;margin:0 .6em;font-size:1em}.swal2-popup.swal2-toast .swal2-close{position:initial}.swal2-popup.swal2-toast .swal2-content{justify-content:flex-start;font-size:1em}.swal2-popup.swal2-toast .swal2-icon{width:2em;min-width:2em;height:2em;margin:0}.swal2-popup.swal2-toast .swal2-icon-text{font-size:2em;font-weight:700;line-height:1em}.swal2-popup.swal2-toast .swal2-icon.swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-popup.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line]{top:.875em;width:1.375em}.swal2-popup.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=left]{left:.3125em}.swal2-popup.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=right]{right:.3125em}.swal2-popup.swal2-toast .swal2-actions{height:auto;margin:0 .3125em}.swal2-popup.swal2-toast .swal2-styled{margin:0 .3125em;padding:.3125em .625em;font-size:1em}.swal2-popup.swal2-toast .swal2-styled:focus{box-shadow:0 0 0 .0625em #fff,0 0 0 .125em rgba(50,100,150,.4)}.swal2-popup.swal2-toast .swal2-success{border-color:#a5dc86}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-circular-line]{position:absolute;width:2em;height:2.8125em;-webkit-transform:rotate(45deg);transform:rotate(45deg);border-radius:50%}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=left]{top:-.25em;left:-.9375em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg);-webkit-transform-origin:2em 2em;transform-origin:2em 2em;border-radius:4em 0 0 4em}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=right]{top:-.25em;left:.9375em;-webkit-transform-origin:0 2em;transform-origin:0 2em;border-radius:0 4em 4em 0}.swal2-popup.swal2-toast .swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-popup.swal2-toast .swal2-success .swal2-success-fix{top:0;left:.4375em;width:.4375em;height:2.6875em}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-line]{height:.3125em}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-line][class$=tip]{top:1.125em;left:.1875em;width:.75em}.swal2-popup.swal2-toast .swal2-success [class^=swal2-success-line][class$=long]{top:.9375em;right:.1875em;width:1.375em}.swal2-popup.swal2-toast.swal2-show{-webkit-animation:showSweetToast .5s;animation:showSweetToast .5s}.swal2-popup.swal2-toast.swal2-hide{-webkit-animation:hideSweetToast .2s forwards;animation:hideSweetToast .2s forwards}.swal2-popup.swal2-toast .swal2-animate-success-icon .swal2-success-line-tip{-webkit-animation:animate-toast-success-tip .75s;animation:animate-toast-success-tip .75s}.swal2-popup.swal2-toast .swal2-animate-success-icon .swal2-success-line-long{-webkit-animation:animate-toast-success-long .75s;animation:animate-toast-success-long .75s}@-webkit-keyframes showSweetToast{0%{-webkit-transform:translateY(-.625em) rotateZ(2deg);transform:translateY(-.625em) rotateZ(2deg);opacity:0}33%{-webkit-transform:translateY(0) rotateZ(-2deg);transform:translateY(0) rotateZ(-2deg);opacity:.5}66%{-webkit-transform:translateY(.3125em) rotateZ(2deg);transform:translateY(.3125em) rotateZ(2deg);opacity:.7}100%{-webkit-transform:translateY(0) rotateZ(0);transform:translateY(0) rotateZ(0);opacity:1}}@keyframes showSweetToast{0%{-webkit-transform:translateY(-.625em) rotateZ(2deg);transform:translateY(-.625em) rotateZ(2deg);opacity:0}33%{-webkit-transform:translateY(0) rotateZ(-2deg);transform:translateY(0) rotateZ(-2deg);opacity:.5}66%{-webkit-transform:translateY(.3125em) rotateZ(2deg);transform:translateY(.3125em) rotateZ(2deg);opacity:.7}100%{-webkit-transform:translateY(0) rotateZ(0);transform:translateY(0) rotateZ(0);opacity:1}}@-webkit-keyframes hideSweetToast{0%{opacity:1}33%{opacity:.5}100%{-webkit-transform:rotateZ(1deg);transform:rotateZ(1deg);opacity:0}}@keyframes hideSweetToast{0%{opacity:1}33%{opacity:.5}100%{-webkit-transform:rotateZ(1deg);transform:rotateZ(1deg);opacity:0}}@-webkit-keyframes animate-toast-success-tip{0%{top:.5625em;left:.0625em;width:0}54%{top:.125em;left:.125em;width:0}70%{top:.625em;left:-.25em;width:1.625em}84%{top:1.0625em;left:.75em;width:.5em}100%{top:1.125em;left:.1875em;width:.75em}}@keyframes animate-toast-success-tip{0%{top:.5625em;left:.0625em;width:0}54%{top:.125em;left:.125em;width:0}70%{top:.625em;left:-.25em;width:1.625em}84%{top:1.0625em;left:.75em;width:.5em}100%{top:1.125em;left:.1875em;width:.75em}}@-webkit-keyframes animate-toast-success-long{0%{top:1.625em;right:1.375em;width:0}65%{top:1.25em;right:.9375em;width:0}84%{top:.9375em;right:0;width:1.125em}100%{top:.9375em;right:.1875em;width:1.375em}}@keyframes animate-toast-success-long{0%{top:1.625em;right:1.375em;width:0}65%{top:1.25em;right:.9375em;width:0}84%{top:.9375em;right:0;width:1.125em}100%{top:.9375em;right:.1875em;width:1.375em}}body.swal2-shown:not(.swal2-no-backdrop):not(.swal2-toast-shown){overflow-y:hidden}body.swal2-height-auto{height:auto!important}body.swal2-no-backdrop .swal2-shown{top:auto;right:auto;bottom:auto;left:auto;background-color:transparent}body.swal2-no-backdrop .swal2-shown>.swal2-modal{box-shadow:0 0 10px rgba(0,0,0,.4)}body.swal2-no-backdrop .swal2-shown.swal2-top{top:0;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%)}body.swal2-no-backdrop .swal2-shown.swal2-top-left,body.swal2-no-backdrop .swal2-shown.swal2-top-start{top:0;left:0}body.swal2-no-backdrop .swal2-shown.swal2-top-end,body.swal2-no-backdrop .swal2-shown.swal2-top-right{top:0;right:0}body.swal2-no-backdrop .swal2-shown.swal2-center{top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%)}body.swal2-no-backdrop .swal2-shown.swal2-center-left,body.swal2-no-backdrop .swal2-shown.swal2-center-start{top:50%;left:0;-webkit-transform:translateY(-50%);transform:translateY(-50%)}body.swal2-no-backdrop .swal2-shown.swal2-center-end,body.swal2-no-backdrop .swal2-shown.swal2-center-right{top:50%;right:0;-webkit-transform:translateY(-50%);transform:translateY(-50%)}body.swal2-no-backdrop .swal2-shown.swal2-bottom{bottom:0;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%)}body.swal2-no-backdrop .swal2-shown.swal2-bottom-left,body.swal2-no-backdrop .swal2-shown.swal2-bottom-start{bottom:0;left:0}body.swal2-no-backdrop .swal2-shown.swal2-bottom-end,body.swal2-no-backdrop .swal2-shown.swal2-bottom-right{right:0;bottom:0}.swal2-container{display:flex;position:fixed;top:0;right:0;bottom:0;left:0;flex-direction:row;align-items:center;justify-content:center;padding:10px;background-color:transparent;z-index:1060;overflow-x:hidden;-webkit-overflow-scrolling:touch}.swal2-container.swal2-top{align-items:flex-start}.swal2-container.swal2-top-left,.swal2-container.swal2-top-start{align-items:flex-start;justify-content:flex-start}.swal2-container.swal2-top-end,.swal2-container.swal2-top-right{align-items:flex-start;justify-content:flex-end}.swal2-container.swal2-center{align-items:center}.swal2-container.swal2-center-left,.swal2-container.swal2-center-start{align-items:center;justify-content:flex-start}.swal2-container.swal2-center-end,.swal2-container.swal2-center-right{align-items:center;justify-content:flex-end}.swal2-container.swal2-bottom{align-items:flex-end}.swal2-container.swal2-bottom-left,.swal2-container.swal2-bottom-start{align-items:flex-end;justify-content:flex-start}.swal2-container.swal2-bottom-end,.swal2-container.swal2-bottom-right{align-items:flex-end;justify-content:flex-end}.swal2-container.swal2-grow-fullscreen>.swal2-modal{display:flex!important;flex:1;align-self:stretch;justify-content:center}.swal2-container.swal2-grow-row>.swal2-modal{display:flex!important;flex:1;align-content:center;justify-content:center}.swal2-container.swal2-grow-column{flex:1;flex-direction:column}.swal2-container.swal2-grow-column.swal2-bottom,.swal2-container.swal2-grow-column.swal2-center,.swal2-container.swal2-grow-column.swal2-top{align-items:center}.swal2-container.swal2-grow-column.swal2-bottom-left,.swal2-container.swal2-grow-column.swal2-bottom-start,.swal2-container.swal2-grow-column.swal2-center-left,.swal2-container.swal2-grow-column.swal2-center-start,.swal2-container.swal2-grow-column.swal2-top-left,.swal2-container.swal2-grow-column.swal2-top-start{align-items:flex-start}.swal2-container.swal2-grow-column.swal2-bottom-end,.swal2-container.swal2-grow-column.swal2-bottom-right,.swal2-container.swal2-grow-column.swal2-center-end,.swal2-container.swal2-grow-column.swal2-center-right,.swal2-container.swal2-grow-column.swal2-top-end,.swal2-container.swal2-grow-column.swal2-top-right{align-items:flex-end}.swal2-container.swal2-grow-column>.swal2-modal{display:flex!important;flex:1;align-content:center;justify-content:center}.swal2-container:not(.swal2-top):not(.swal2-top-start):not(.swal2-top-end):not(.swal2-top-left):not(.swal2-top-right):not(.swal2-center-start):not(.swal2-center-end):not(.swal2-center-left):not(.swal2-center-right):not(.swal2-bottom):not(.swal2-bottom-start):not(.swal2-bottom-end):not(.swal2-bottom-left):not(.swal2-bottom-right)>.swal2-modal{margin:auto}@media all and (-ms-high-contrast:none),(-ms-high-contrast:active){.swal2-container .swal2-modal{margin:0!important}}.swal2-container.swal2-fade{transition:background-color .1s}.swal2-container.swal2-shown{background-color:rgba(0,0,0,.4)}.swal2-popup{display:none;position:relative;flex-direction:column;justify-content:center;width:32em;max-width:100%;padding:1.25em;border-radius:.3125em;background:#fff;font-family:inherit;font-size:1rem;box-sizing:border-box}.swal2-popup:focus{outline:0}.swal2-popup.swal2-loading{overflow-y:hidden}.swal2-popup .swal2-header{display:flex;flex-direction:column;align-items:center}.swal2-popup .swal2-title{display:block;position:relative;max-width:100%;margin:0 0 .4em;padding:0;color:#595959;font-size:1.875em;font-weight:600;text-align:center;text-transform:none;word-wrap:break-word}.swal2-popup .swal2-actions{align-items:center;justify-content:center;margin:1.25em auto 0}.swal2-popup .swal2-actions:not(.swal2-loading) .swal2-styled[disabled]{opacity:.4}.swal2-popup .swal2-actions:not(.swal2-loading) .swal2-styled:hover{-webkit-transform: translateY(-3px);transform: translateY(-3px);}.swal2-popup .swal2-actions:not(.swal2-loading) .swal2-styled:active{background-image:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2))}.swal2-popup .swal2-actions.swal2-loading .swal2-styled.swal2-confirm{width:2.5em;height:2.5em;margin:.46875em;padding:0;border:.25em solid transparent;border-radius:100%;border-color:transparent;background-color:transparent!important;color:transparent;cursor:default;box-sizing:border-box;-webkit-animation:swal2-rotate-loading 1.5s linear 0s infinite normal;animation:swal2-rotate-loading 1.5s linear 0s infinite normal;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.swal2-popup .swal2-actions.swal2-loading .swal2-styled.swal2-cancel{margin-right:30px;margin-left:30px}.swal2-popup .swal2-actions.swal2-loading :not(.swal2-styled).swal2-confirm::after{display:inline-block;width:15px;height:15px;margin-left:5px;border:3px solid #888ea8;border-radius:50%;border-right-color:transparent;box-shadow:1px 1px 1px #fff;content:'';-webkit-animation:swal2-rotate-loading 1.5s linear 0s infinite normal;animation:swal2-rotate-loading 1.5s linear 0s infinite normal}.swal2-popup .swal2-styled{margin:0 .3125em;padding:.625em 2em;font-weight:500;box-shadow:none}.swal2-popup .swal2-styled:not([disabled]){cursor:pointer}.swal2-popup .swal2-styled.swal2-confirm{border:0;border-radius:.25em;background:initial;background-color:#1b55e2;color:#fff;font-size:14px}.swal2-popup .swal2-styled.swal2-cancel{background-color: #fff; color: #1b55e2; font-weight: 700;border: 1px solid #e8e8e8;}.swal2-popup .swal2-styled:focus{outline:0;box-shadow:0 0 0 2px #fff,0 0 0 4px rgba(50,100,150,.4)}.swal2-popup .swal2-styled::-moz-focus-inner{border:0}.swal2-popup .swal2-footer{justify-content:center;margin:1.25em 0 0;padding-top:1em;border-top:1px solid #eee;color:#545454;font-size:1em}.swal2-popup .swal2-image{max-width:100%;margin:1.25em auto}.swal2-popup .swal2-close{position:absolute;top:0;right:0;justify-content:center;width:1.2em;height:1.2em;padding:0;transition:color .1s ease-out;border:none;border-radius:0;background:0 0;color:#ccc;font-family:serif;font-size:2.5em;line-height:1.2;cursor:pointer;overflow:hidden}.swal2-popup .swal2-close:hover{-webkit-transform:none;transform:none;color:#f27474}.swal2-popup>.swal2-checkbox,.swal2-popup>.swal2-file,.swal2-popup>.swal2-input,.swal2-popup>.swal2-radio,.swal2-popup>.swal2-select,.swal2-popup>.swal2-textarea{display:none}.swal2-popup .swal2-content{justify-content:center;margin:0;padding:0;color:#545454;font-size:1.125em;font-weight:300;line-height:normal;word-wrap:break-word}.swal2-popup #swal2-content{text-align:center}.swal2-popup .swal2-checkbox,.swal2-popup .swal2-file,.swal2-popup .swal2-input,.swal2-popup .swal2-radio,.swal2-popup .swal2-select,.swal2-popup .swal2-textarea{margin:1em auto}.swal2-popup .swal2-file,.swal2-popup .swal2-input,.swal2-popup .swal2-textarea{width:100%;transition:border-color .3s,box-shadow .3s;border:1px solid #d9d9d9;border-radius:.1875em;font-size:1.125em;box-shadow:inset 0 1px 1px rgba(0,0,0,.06);box-sizing:border-box}.swal2-popup .swal2-file.swal2-inputerror,.swal2-popup .swal2-input.swal2-inputerror,.swal2-popup .swal2-textarea.swal2-inputerror{border-color:#f27474!important;box-shadow:0 0 2px #f27474!important}.swal2-popup .swal2-file:focus,.swal2-popup .swal2-input:focus,.swal2-popup .swal2-textarea:focus{border:1px solid #b4dbed;outline:0;box-shadow:0 0 3px #c4e6f5}.swal2-popup .swal2-file::-webkit-input-placeholder,.swal2-popup .swal2-input::-webkit-input-placeholder,.swal2-popup .swal2-textarea::-webkit-input-placeholder{color:#ccc}.swal2-popup .swal2-file:-ms-input-placeholder,.swal2-popup .swal2-input:-ms-input-placeholder,.swal2-popup .swal2-textarea:-ms-input-placeholder{color:#ccc}.swal2-popup .swal2-file::-ms-input-placeholder,.swal2-popup .swal2-input::-ms-input-placeholder,.swal2-popup .swal2-textarea::-ms-input-placeholder{color:#ccc}.swal2-popup .swal2-file::placeholder,.swal2-popup .swal2-input::placeholder,.swal2-popup .swal2-textarea::placeholder{color:#ccc}.swal2-popup .swal2-range input{width:80%}.swal2-popup .swal2-range output{width:20%;font-weight:600;text-align:center}.swal2-popup .swal2-range input,.swal2-popup .swal2-range output{height:2.625em;margin:1em auto;padding:0;font-size:1.125em;line-height:2.625em}.swal2-popup .swal2-input{height:2.625em;padding:.75em}.swal2-popup .swal2-input[type=number]{max-width:10em}.swal2-popup .swal2-file{font-size:1.125em}.swal2-popup .swal2-textarea{height:6.75em;padding:.75em}.swal2-popup .swal2-select{min-width:50%;max-width:100%;padding:.375em .625em;color:#545454;font-size:1.125em}.swal2-popup .swal2-checkbox,.swal2-popup .swal2-radio{align-items:center;justify-content:center}.swal2-popup .swal2-checkbox label,.swal2-popup .swal2-radio label{margin:0 .6em;font-size:1.125em}.swal2-popup .swal2-checkbox input,.swal2-popup .swal2-radio input{margin:0 .4em}.swal2-popup .swal2-validationerror{display:none;align-items:center;justify-content:center;padding:.625em;background:#f0f0f0;color:#666;font-size:1em;font-weight:300;overflow:hidden}.swal2-popup .swal2-validationerror::before{display:inline-block;width:1.5em;min-width:1.5em;height:1.5em;margin:0 .625em;border-radius:50%;background-color:#f27474;color:#fff;font-weight:600;line-height:1.5em;text-align:center;content:'!';zoom:normal}@supports (-ms-accelerator:true){.swal2-range input{width:100%!important}.swal2-range output{display:none}}@media all and (-ms-high-contrast:none),(-ms-high-contrast:active){.swal2-range input{width:100%!important}.swal2-range output{display:none}}@-moz-document url-prefix(){.swal2-close:focus{outline:2px solid rgba(50,100,150,.4)}}.swal2-icon{position:relative;justify-content:center;width:5em;height:5em;margin:1.25em auto 1.875em;border:.25em solid transparent;border-radius:50%;line-height:5em;cursor:default;box-sizing:content-box;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;zoom:normal}.swal2-icon-text{font-size:3.75em}.swal2-icon.swal2-error{border-color:#f27474}.swal2-icon.swal2-error .swal2-x-mark{position:relative;flex-grow:1}.swal2-icon.swal2-error [class^=swal2-x-mark-line]{display:block;position:absolute;top:2.3125em;width:2.9375em;height:.3125em;border-radius:.125em;background-color:#f27474}.swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=left]{left:1.0625em;-webkit-transform:rotate(45deg);transform:rotate(45deg)}.swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=right]{right:1em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}.swal2-icon.swal2-warning{border-color:#facea8;color:#f8bb86}.swal2-icon.swal2-info{border-color:#9de0f6;color:#3fc3ee}.swal2-icon.swal2-question{border-color:#c9dae1;color:#87adbd}.swal2-icon.swal2-success{border-color:#a5dc86}.swal2-icon.swal2-success [class^=swal2-success-circular-line]{position:absolute;width:3.75em;height:7.5em;-webkit-transform:rotate(45deg);transform:rotate(45deg);border-radius:50%}.swal2-icon.swal2-success [class^=swal2-success-circular-line][class$=left]{top:-.4375em;left:-2.0635em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg);-webkit-transform-origin:3.75em 3.75em;transform-origin:3.75em 3.75em;border-radius:7.5em 0 0 7.5em}.swal2-icon.swal2-success [class^=swal2-success-circular-line][class$=right]{top:-.6875em;left:1.875em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg);-webkit-transform-origin:0 3.75em;transform-origin:0 3.75em;border-radius:0 7.5em 7.5em 0}.swal2-icon.swal2-success .swal2-success-ring{position:absolute;top:-.25em;left:-.25em;width:100%;height:100%;border:.25em solid rgba(165,220,134,.3);border-radius:50%;z-index:2;box-sizing:content-box}.swal2-icon.swal2-success .swal2-success-fix{position:absolute;top:.5em;left:1.625em;width:.4375em;height:5.625em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg);z-index:1}.swal2-icon.swal2-success [class^=swal2-success-line]{display:block;position:absolute;height:.3125em;border-radius:.125em;background-color:#a5dc86;z-index:2}.swal2-icon.swal2-success [class^=swal2-success-line][class$=tip]{top:2.875em;left:.875em;width:1.5625em;-webkit-transform:rotate(45deg);transform:rotate(45deg)}.swal2-icon.swal2-success [class^=swal2-success-line][class$=long]{top:2.375em;right:.5em;width:2.9375em;-webkit-transform:rotate(-45deg);transform:rotate(-45deg)}.swal2-progresssteps{align-items:center;margin:0 0 1.25em;padding:0;font-weight:600}.swal2-progresssteps li{display:inline-block;position:relative}.swal2-progresssteps .swal2-progresscircle{width:2em;height:2em;border-radius:2em;background:#3085d6;color:#fff;line-height:2em;text-align:center;z-index:20}.swal2-progresssteps .swal2-progresscircle:first-child{margin-left:0}.swal2-progresssteps .swal2-progresscircle:last-child{margin-right:0}.swal2-progresssteps .swal2-progresscircle.swal2-activeprogressstep{background:#3085d6}.swal2-progresssteps .swal2-progresscircle.swal2-activeprogressstep~.swal2-progresscircle{background:#add8e6}.swal2-progresssteps .swal2-progresscircle.swal2-activeprogressstep~.swal2-progressline{background:#add8e6}.swal2-progresssteps .swal2-progressline{width:2.5em;height:.4em;margin:0 -1px;background:#3085d6;z-index:10}[class^=swal2]{-webkit-tap-highlight-color:transparent}.swal2-show{-webkit-animation:swal2-show .3s;animation:swal2-show .3s}.swal2-show.swal2-noanimation{-webkit-animation:none;animation:none}.swal2-hide{-webkit-animation:swal2-hide .15s forwards;animation:swal2-hide .15s forwards}.swal2-hide.swal2-noanimation{-webkit-animation:none;animation:none}[dir=rtl] .swal2-close{right:auto;left:0}.swal2-animate-success-icon .swal2-success-line-tip{-webkit-animation:swal2-animate-success-line-tip .75s;animation:swal2-animate-success-line-tip .75s}.swal2-animate-success-icon .swal2-success-line-long{-webkit-animation:swal2-animate-success-line-long .75s;animation:swal2-animate-success-line-long .75s}.swal2-animate-success-icon .swal2-success-circular-line-right{-webkit-animation:swal2-rotate-success-circular-line 4.25s ease-in;animation:swal2-rotate-success-circular-line 4.25s ease-in}.swal2-animate-error-icon{-webkit-animation:swal2-animate-error-icon .5s;animation:swal2-animate-error-icon .5s}.swal2-animate-error-icon .swal2-x-mark{-webkit-animation:swal2-animate-error-x-mark .5s;animation:swal2-animate-error-x-mark .5s}@-webkit-keyframes swal2-rotate-loading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}@keyframes swal2-rotate-loading{0%{-webkit-transform:rotate(0);transform:rotate(0)}100%{-webkit-transform:rotate(360deg);transform:rotate(360deg)}}</style><style type="text/css">.apexcharts-canvas {
+  position: relative;
+  user-select: none;
+  /* cannot give overflow: hidden as it will crop tooltips which overflow outside chart area */
+}
+
+/* scrollbar is not visible by default for legend, hence forcing the visibility */
+.apexcharts-canvas ::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 6px;
+}
+.apexcharts-canvas ::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0,0,0,.5);
+  box-shadow: 0 0 1px rgba(255,255,255,.5);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+.apexcharts-canvas.dark {
+  background: #343F57;
+}
+
+.apexcharts-inner {
+  position: relative;
+}
+
+.legend-mouseover-inactive {
+  transition: 0.15s ease all;
+  opacity: 0.20;
+}
+
+.apexcharts-series-collapsed {
+  opacity: 0;
+}
+
+.apexcharts-gridline, .apexcharts-text {
+  pointer-events: none;
+}
+
+.apexcharts-tooltip {
+  border-radius: 5px;
+  box-shadow: 2px 2px 6px -4px #999;
+  cursor: default;
+  font-size: 14px;
+  left: 62px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 20px;
+  overflow: hidden;
+  white-space: nowrap;
+  z-index: 12;
+  transition: 0.15s ease all;
+}
+.apexcharts-tooltip.light {
+  border: 1px solid #e3e3e3;
+  background: rgba(255, 255, 255, 0.96);
+}
+.apexcharts-tooltip.dark {
+  color: #fff;
+  background: rgba(30,30,30, 0.8);
+}
+.apexcharts-tooltip * {
+  font-family: inherit;
+}
+
+.apexcharts-tooltip .apexcharts-marker,
+.apexcharts-area-series .apexcharts-area,
+.apexcharts-line {
+  pointer-events: none;
+}
+
+.apexcharts-tooltip.active {
+  opacity: 1;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-tooltip-title {
+  padding: 6px;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+.apexcharts-tooltip.light .apexcharts-tooltip-title {
+  background: #ECEFF1;
+  border-bottom: 1px solid #ddd;
+}
+.apexcharts-tooltip.dark .apexcharts-tooltip-title {
+  background: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid #333;
+}
+
+.apexcharts-tooltip-text-value,
+.apexcharts-tooltip-text-z-value {
+  display: inline-block;
+  font-weight: 600;
+  margin-left: 5px;
+}
+
+.apexcharts-tooltip-text-z-label:empty,
+.apexcharts-tooltip-text-z-value:empty {
+  display: none;
+}
+
+.apexcharts-tooltip-text-value,
+.apexcharts-tooltip-text-z-value {
+  font-weight: 600;
+}
+
+.apexcharts-tooltip-marker {
+  width: 12px;
+  height: 12px;
+  position: relative;
+  top: 0px;
+  margin-right: 10px;
+  border-radius: 50%;
+}
+
+.apexcharts-tooltip-series-group {
+  padding: 0 10px;
+  display: none;
+  text-align: left;
+  justify-content: left;
+  align-items: center;
+}
+
+.apexcharts-tooltip-series-group.active .apexcharts-tooltip-marker {
+  opacity: 1;
+}
+.apexcharts-tooltip-series-group.active, .apexcharts-tooltip-series-group:last-child {
+  padding-bottom: 4px;
+}
+.apexcharts-tooltip-series-group-hidden {
+  opacity: 0;
+  height: 0;
+  line-height: 0;
+  padding: 0 !important;
+}
+.apexcharts-tooltip-y-group {
+  padding: 6px 0 5px;
+}
+.apexcharts-tooltip-candlestick {
+  padding: 4px 8px;
+}
+.apexcharts-tooltip-candlestick > div {
+  margin: 4px 0;
+}
+.apexcharts-tooltip-candlestick span.value {
+  font-weight: bold;
+}
+
+.apexcharts-tooltip-rangebar {
+  padding: 5px 8px;
+}
+
+.apexcharts-tooltip-rangebar .category {
+  font-weight: 600;
+  color: #777;
+}
+
+.apexcharts-tooltip-rangebar .series-name {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.apexcharts-xaxistooltip {
+  opacity: 0;
+  padding: 9px 10px;
+  pointer-events: none;
+  color: #373d3f;
+  font-size: 13px;
+  text-align: center;
+  border-radius: 2px;
+  position: absolute;
+  z-index: 10;
+  background: #ECEFF1;
+  border: 1px solid #90A4AE;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-xaxistooltip.dark {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.apexcharts-xaxistooltip:after, .apexcharts-xaxistooltip:before {
+  left: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.apexcharts-xaxistooltip:after {
+  border-color: rgba(236, 239, 241, 0);
+  border-width: 6px;
+  margin-left: -6px;
+}
+.apexcharts-xaxistooltip:before {
+  border-color: rgba(144, 164, 174, 0);
+  border-width: 7px;
+  margin-left: -7px;
+}
+
+.apexcharts-xaxistooltip-bottom:after, .apexcharts-xaxistooltip-bottom:before {
+  bottom: 100%;
+}
+
+.apexcharts-xaxistooltip-top:after, .apexcharts-xaxistooltip-top:before {
+  top: 100%;
+}
+
+.apexcharts-xaxistooltip-bottom:after {
+  border-bottom-color: #ECEFF1;
+}
+.apexcharts-xaxistooltip-bottom:before {
+  border-bottom-color: #90A4AE;
+}
+
+.apexcharts-xaxistooltip-bottom.dark:after {
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+.apexcharts-xaxistooltip-bottom.dark:before {
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+
+.apexcharts-xaxistooltip-top:after {
+  border-top-color:#ECEFF1
+}
+.apexcharts-xaxistooltip-top:before {
+  border-top-color: #90A4AE;
+}
+.apexcharts-xaxistooltip-top.dark:after {
+  border-top-color:rgba(0, 0, 0, 0.5);
+}
+.apexcharts-xaxistooltip-top.dark:before {
+  border-top-color: rgba(0, 0, 0, 0.5);
+}
+
+
+.apexcharts-xaxistooltip.active {
+  opacity: 1;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-yaxistooltip {
+  opacity: 0;
+  padding: 4px 10px;
+  pointer-events: none;
+  color: #373d3f;
+  font-size: 13px;
+  text-align: center;
+  border-radius: 2px;
+  position: absolute;
+  z-index: 10;
+  background: #ECEFF1;
+  border: 1px solid #90A4AE;
+}
+
+.apexcharts-yaxistooltip.dark {
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.apexcharts-yaxistooltip:after, .apexcharts-yaxistooltip:before {
+  top: 50%;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+.apexcharts-yaxistooltip:after {
+  border-color: rgba(236, 239, 241, 0);
+  border-width: 6px;
+  margin-top: -6px;
+}
+.apexcharts-yaxistooltip:before {
+  border-color: rgba(144, 164, 174, 0);
+  border-width: 7px;
+  margin-top: -7px;
+}
+
+.apexcharts-yaxistooltip-left:after, .apexcharts-yaxistooltip-left:before {
+  left: 100%;
+}
+
+.apexcharts-yaxistooltip-right:after, .apexcharts-yaxistooltip-right:before {
+  right: 100%;
+}
+
+.apexcharts-yaxistooltip-left:after {
+  border-left-color: #ECEFF1;
+}
+.apexcharts-yaxistooltip-left:before {
+  border-left-color: #90A4AE;
+}
+.apexcharts-yaxistooltip-left.dark:after {
+  border-left-color: rgba(0, 0, 0, 0.5);
+}
+.apexcharts-yaxistooltip-left.dark:before {
+  border-left-color: rgba(0, 0, 0, 0.5);
+}
+
+.apexcharts-yaxistooltip-right:after {
+  border-right-color: #ECEFF1;
+}
+.apexcharts-yaxistooltip-right:before {
+  border-right-color: #90A4AE;
+}
+.apexcharts-yaxistooltip-right.dark:after {
+  border-right-color: rgba(0, 0, 0, 0.5);
+}
+.apexcharts-yaxistooltip-right.dark:before {
+  border-right-color: rgba(0, 0, 0, 0.5);
+}
+
+.apexcharts-yaxistooltip.active {
+  opacity: 1;
+}
+.apexcharts-yaxistooltip-hidden {
+  display: none;
+}
+
+.apexcharts-xcrosshairs, .apexcharts-ycrosshairs {
+  pointer-events: none;
+  opacity: 0;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-xcrosshairs.active, .apexcharts-ycrosshairs.active {
+  opacity: 1;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-ycrosshairs-hidden {
+  opacity: 0;
+}
+
+.apexcharts-zoom-rect {
+  pointer-events: none;
+}
+.apexcharts-selection-rect {
+  cursor: move;
+}
+
+.svg_select_points, .svg_select_points_rot {
+  opacity: 0;
+  visibility: hidden;
+}
+.svg_select_points_l, .svg_select_points_r {
+  cursor: ew-resize;
+  opacity: 1;
+  visibility: visible;
+  fill: #888;
+}
+.apexcharts-canvas.zoomable .hovering-zoom {
+  cursor: crosshair
+}
+.apexcharts-canvas.zoomable .hovering-pan {
+  cursor: move
+}
+
+.apexcharts-xaxis,
+.apexcharts-yaxis {
+  pointer-events: none;
+}
+
+.apexcharts-zoom-icon,
+.apexcharts-zoom-in-icon,
+.apexcharts-zoom-out-icon,
+.apexcharts-reset-zoom-icon,
+.apexcharts-pan-icon,
+.apexcharts-selection-icon,
+.apexcharts-menu-icon,
+.apexcharts-toolbar-custom-icon {
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  line-height: 24px;
+  color: #6E8192;
+  text-align: center;
+}
+
+
+.apexcharts-zoom-icon svg,
+.apexcharts-zoom-in-icon svg,
+.apexcharts-zoom-out-icon svg,
+.apexcharts-reset-zoom-icon svg,
+.apexcharts-menu-icon svg {
+  fill: #6E8192;
+}
+.apexcharts-selection-icon svg {
+  fill: #444;
+  transform: scale(0.76)
+}
+
+.dark .apexcharts-zoom-icon svg,
+.dark .apexcharts-zoom-in-icon svg,
+.dark .apexcharts-zoom-out-icon svg,
+.dark .apexcharts-reset-zoom-icon svg,
+.dark .apexcharts-pan-icon svg,
+.dark .apexcharts-selection-icon svg,
+.dark .apexcharts-menu-icon svg,
+.dark .apexcharts-toolbar-custom-icon svg{
+  fill: #f3f4f5;
+}
+
+.apexcharts-canvas .apexcharts-zoom-icon.selected svg,
+.apexcharts-canvas .apexcharts-selection-icon.selected svg,
+.apexcharts-canvas .apexcharts-reset-zoom-icon.selected svg {
+  fill: #008FFB;
+}
+.light .apexcharts-selection-icon:not(.selected):hover svg,
+.light .apexcharts-zoom-icon:not(.selected):hover svg,
+.light .apexcharts-zoom-in-icon:hover svg,
+.light .apexcharts-zoom-out-icon:hover svg,
+.light .apexcharts-reset-zoom-icon:hover svg,
+.light .apexcharts-menu-icon:hover svg {
+  fill: #333;
+}
+
+.apexcharts-selection-icon, .apexcharts-menu-icon {
+  position: relative;
+}
+.apexcharts-reset-zoom-icon {
+  margin-left: 5px;
+}
+.apexcharts-zoom-icon, .apexcharts-reset-zoom-icon, .apexcharts-menu-icon {
+  transform: scale(0.85);
+}
+
+.apexcharts-zoom-in-icon, .apexcharts-zoom-out-icon {
+  transform: scale(0.7)
+}
+
+.apexcharts-zoom-out-icon {
+  margin-right: 3px;
+}
+
+.apexcharts-pan-icon {
+  transform: scale(0.62);
+  position: relative;
+  left: 1px;
+  top: 0px;
+}
+.apexcharts-pan-icon svg {
+  fill: #fff;
+  stroke: #6E8192;
+  stroke-width: 2;
+}
+.apexcharts-pan-icon.selected svg {
+  stroke: #008FFB;
+}
+.apexcharts-pan-icon:not(.selected):hover svg {
+  stroke: #333;
+}
+
+.apexcharts-toolbar {
+  position: absolute;
+  z-index: 11;
+  top: 0px;
+  right: 3px;
+  max-width: 176px;
+  text-align: right;
+  border-radius: 3px;
+  padding: 0px 6px 2px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.apexcharts-toolbar svg {
+  pointer-events: none;
+}
+
+.apexcharts-menu {
+  background: #fff;
+  position: absolute;
+  top: 100%;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 3px;
+  right: 10px;
+  opacity: 0;
+  min-width: 110px;
+  transition: 0.15s ease all;
+  pointer-events: none;
+}
+
+.apexcharts-menu.open {
+  opacity: 1;
+  pointer-events: all;
+  transition: 0.15s ease all;
+}
+
+.apexcharts-menu-item {
+  padding: 6px 7px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.light .apexcharts-menu-item:hover {
+  background: #eee;
+}
+.dark .apexcharts-menu {
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+}
+
+@media screen and (min-width: 768px) {
+  .apexcharts-toolbar {
+    /*opacity: 0;*/
+  }
+
+  .apexcharts-canvas:hover .apexcharts-toolbar {
+    opacity: 1;
+  }
+}
+
+.apexcharts-datalabel.hidden {
+  opacity: 0;
+}
+
+.apexcharts-pie-label,
+.apexcharts-datalabel, .apexcharts-datalabel-label, .apexcharts-datalabel-value {
+  cursor: default;
+  pointer-events: none;
+}
+
+.apexcharts-pie-label-delay {
+  opacity: 0;
+  animation-name: opaque;
+  animation-duration: 0.3s;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease;
+}
+
+.apexcharts-canvas .hidden {
+  opacity: 0;
+}
+
+.apexcharts-hide .apexcharts-series-points {
+  opacity: 0;
+}
+
+.apexcharts-area-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events,
+.apexcharts-line-series .apexcharts-series-markers .apexcharts-marker.no-pointer-events, .apexcharts-radar-series path, .apexcharts-radar-series polygon {
+  pointer-events: none;
+}
+
+/* markers */
+
+.apexcharts-marker {
+  transition: 0.15s ease all;
+}
+
+@keyframes opaque {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Resize generated styles */
+@keyframes resizeanim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.resize-triggers {
+  animation: 1ms resizeanim;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.resize-triggers, .resize-triggers > div, .contract-trigger:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.resize-triggers > div {
+  background: #eee;
+  overflow: auto;
+}
+
+.contract-trigger:before {
+  width: 200%;
+  height: 200%;
+}
+</style><style id="smooth-scrollbar-style">
+[data-scrollbar] {
+  display: block;
+  position: relative;
+}
+
+.scroll-content {
+  -webkit-transform: translate3d(0, 0, 0);
+          transform: translate3d(0, 0, 0);
+}
+
+.scrollbar-track {
+  position: absolute;
+  opacity: 0;
+  z-index: 1;
+  background: rgba(222, 222, 222, .75);
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  -webkit-transition: opacity 0.5s 0.5s ease-out;
+          transition: opacity 0.5s 0.5s ease-out;
+}
+.scrollbar-track.show,
+.scrollbar-track:hover {
+  opacity: 1;
+  -webkit-transition-delay: 0s;
+          transition-delay: 0s;
+}
+
+.scrollbar-track-x {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+}
+.scrollbar-track-y {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+}
+.scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  background: rgba(0, 0, 0, .5);
+  border-radius: 4px;
+}
+</style>
+
+<style>
+    .table { color: #fff; background-color: #171717; }
+    .btn-edit, .btn-delete, .btn-view { color: #fff; }
+    .btn-edit { background-color: #007bff; }
+    .btn-delete { background-color: #dc3545; }
+    .btn-view { background-color: #28a745; }
+  </style>
+
+</head>
+
+
+<body style="background-color:black;" class="">
+  
+  
+  <!-- Modified Admin Frontend (admin-dashboard.ejs or similar) - Added notification icon, badge, modal, custom send form -->
+<section class="content">
+
+    <div class="iq-sidebar" style="background-color:#171717;">
+    <div class="iq-sidebar-logo d-flex justify-content-between">
+        <a href="#" class="header-logo">
+            <img src="images/logo.svg" class="img-fluid rounded-normal" alt="">
+        </a>
+        <div class="iq-menu-bt-sidebar">
+            <div class="iq-menu-bt align-self-center">
+                <div class="wrapper-menu">
+                    <div class="main-circle"><i class="ri-arrow-left-s-line" style="color:#ffF;"></i></div>
+                    <div class="hover-circle"><i class="ri-arrow-right-s-line" style="color:#ffF;"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="sidebar-scrollbar" data-scrollbar="true" tabindex="-1" style="overflow: hidden; outline: none;"><div class="scroll-content">
+        <nav class="iq-sidebar-menu">
+            
+            <ul id="iq-sidebar-toggle" class="iq-menu">
+                <li>
+                    <a href="/adminRoute" class="iq-waves-effect" style="color:#fff;"><i class="ai-home-alt1"></i><span>Dashboard</span></a>
+                </li>
+                                <li>
+                    <a href="/allVerify" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-person-check"></i><span>all verification</span></a>
+                </li>
+                                <li>
+                    <a href="/allFunding" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-database-add"></i><span>all Deposit</span></a>
+                </li>
+
+                 <li>
+                    <a href="/all-copytrades" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-copy"></i><span>all createdExperts</span></a>
+                </li>
+                 <li>
+                    <a href="/user-copytrades" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-copy"></i><span>all usersCopytrade</span></a>
+                </li>
+                <li>
+                    <a href="/allWidthdrawals" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-coin"></i><span>all Withdrawrals</span></a>
+                </li>
+                <li>
+                    <a href="/all-affiliates" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-robot"></i><span>Affiliate Packages</span></a>
+                </li>
+                <li>
+                    <a href="/all-accountUpgrade" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-arrow-90deg-up"></i><span>Upgrade</span></a>
+                </li>
+
+                 <li>
+                <a href="/all-chats" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-chat-dots"></i><span>All Chats</span></a>
+            </li>
+              
+                
+                <li>
+                    <a href="/all-signal" class="iq-waves-effect" style="color:#fff;"><i class="bi bi-broadcast-pin"></i><span>all signals</span></a>
+                </li>
+                <li>
+                    <a href="/all-livetrade" class="iq-waves-effect" style="color:#fff;"><i class="ai-align-bottom"></i><span>all  Trading</span></a>
+                </li>
+                <li>
+                    <a href="/all-tradestock" class="iq-waves-effect" style="color:#fff;"><i class="ai-data"></i><span>all StocksTrades</span></a>
+                </li>
+                
+                <li>
+                    <a href="mailto:support@digital-figtopmarkets.com" class="iq-waves-effect" style="color:#fff;"><i class="ai-envelope"></i><span>Email us</span></a>
+                </li>
+                 <li>
+                    <a href="/all-wallets" class="iq-waves-effect" style="color:#fff;"><i class="ai-arrow-right-left"></i><span>wallet Addresses</span></a>
+                </li>
+                 <li>
+                    <a href="/logout" class="iq-waves-effect" style="color:#fff;"><i class="ai-sign-out"></i><span>logout out</span></a>
+                </li>
+                
+                </ul>
+        </nav>
+    </div><div class="scrollbar-track scrollbar-track-x" style="display: none;"><div class="scrollbar-thumb scrollbar-thumb-x" style="width: 300px; transform: translate3d(0px, 0px, 0px);"></div></div><div class="scrollbar-track scrollbar-track-y" style="display: block;"><div class="scrollbar-thumb scrollbar-thumb-y" style="height: 463.426px; transform: translate3d(0px, 0px, 0px);"></div></div></div>
+</div>
+<!-- TOP Nav Bar -->
+<div class="iq-top-navbar" style="background-color:#171717;">
+    <div class="iq-navbar-custom">
+        <nav class="navbar navbar-expand-lg navbar-light p-0">
+            <div class="iq-menu-bt d-flex align-items-center">
+                <div class="wrapper-menu">
+                    <div class="main-circle"><i class="ri-arrow-left-s-line" style="color:#ffF;"></i></div>
+                    <div class="hover-circle"><i class="ri-arrow-right-s-line" style="color:#ffF;"></i></div>
+                </div>
+                <div class="iq-navbar-logo d-flex justify-content-between">
+                    <a href="#" class="header-logo">
+                        <img src="images/favicon.svg" class="img-fluid rounded-normal" alt="">
+                    </a>
+                </div>
+            </div>
+           
+            
+            <div class="d-flex flex-column" style="margin-top:-20px;"> 
+   
+    <div class="hn-1"></div>
+   <div class="hn-2" style="margin-left:-18px;"><%=user.fullname%></div>
+  </div>
+  <div>
+            <ul class="navbar-list">
+                <li class="line-height">
+                    <a href="#" class="search-toggle iq-waves-effect d-flex align-items-center">
+                        </a><div class="profile-img" alt="user"><a href="#" class="search-toggle iq-waves-effect d-flex align-items-center">
+                        <img src="/wp-user/assets5i/img/pers.svg"> 
+                    </a>
+                    <div class="iq-sub-dropdown iq-user-dropdown">
+                        <div class="iq-card shadow-none m-0">
+                            <div class="iq-card-body p-0 " style="background-color:#171717;">
+                                <div class="bg-primary p-3">
+                                    <h5 class="mb-0 text-white line-height"><%=user.fullname%></h5>
+                                </div>
+                                <a href="/profile" class="iq-sub-card iq-bg-primary-hover">
+                                    <div class="media align-items-center">
+                                        <div class="rounded iq-card-icon iq-bg-primary">
+                                            <i class="ri-file-user-line"></i>
+                                        </div>
+                                        <div class="media-body ml-3">
+                                            <h6 class="mb-0 " style="color:#fff;">My Profile</h6>
+                                            <p class="mb-0 font-size-12">View personal profile details.</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                
+                             
+                                <div class="d-inline-block w-100 text-center p-3">
+                                    <a class="bg-primary iq-sign-btn" href="logout" role="button">Sign Out<i class="ri-login-box-line ml-2"></i></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- New: Notification Icon with Badge for Admin -->
+                <li class="line-height position-relative">
+                  <a href="#" class="search-toggle iq-waves-effect d-flex align-items-center" id="adminNotificationToggle">
+                    <i class="bi bi-bell" style="color: #fff; font-size: 1.5rem;"></i>
+                    <span id="adminNotificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+                  </a>
+                </li></li>
+            </ul>
+        </div></nav>
+    </div>
+</div> 
+ <div class="d-flex flex-column" style="margin-top:55px;"> 
+   
+  </div>
+  </div>
+
+<!-- Ensure Bootstrap 5 CSS and JS are included in your project -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<div class="container py-4">
+      <!-- Flash Messages for SweetAlert2 -->
+      <% if (success && success.length > 0) { %>
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Success',
+              text: '<%= success %>',
+              showConfirmButton: true,
+              timer: 3000,
+              timerProgressBar: true,
+              background: '#212529',
+              color: '#fff',
+              confirmButtonColor: '#286090'
+            });
+          });
+        </script>
+      <% } %>
+      <% if (error && error.length > 0) { %>
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: '<%= error %>',
+              showConfirmButton: true,
+              timer: 3000,
+              timerProgressBar: true,
+              background: '#212529',
+              color: '#fff',
+              confirmButtonColor: '#286090'
+            });
+          });
+        </script>
+      <% } %>
+
+      <!-- Search Form -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <form action="/searchUsers" method="POST" class="d-flex align-items-center gap-2">
+            <div class="input-group">
+              <span class="input-group-text bg-primary text-white border-0"><i class="bi bi-search"></i></span>
+              <input type="text" id="search" name="search" class="form-control shadow-sm" placeholder="Search by first or last name" value="">
+            </div>
+            <button type="submit" class="btn btn-primary shadow-sm">
+              <i class="bi bi-search"></i> Search
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Filter Dropdown -->
+      <div class="row mb-4">
+        <div class="col-12 col-md-4">
+          <label for="statusFilter" class="form-label fw-bold text-white">Filter by Status</label>
+          <select id="statusFilter" class="form-select shadow-sm">
+            <option value="all" <%= status === 'all' ? 'selected' : '' %>>All</option>
+            <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+            <option value="suspended" <%= status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- User Table -->
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=index&order=<%= sort === 'index' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      S/N
+                      <% if (sort === 'index') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=fullname&order=<%= sort === 'fullname' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      Full Name
+                      <% if (sort === 'fullname') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=email&order=<%= sort === 'email' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      Email
+                      <% if (sort === 'email') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=country&order=<%= sort === 'country' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      Country
+                      <% if (sort === 'country') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=phone&order=<%= sort === 'phone' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      Telephone
+                      <% if (sort === 'phone') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">
+                    <a href="?page=<%= page %>&sort=isSuspended&order=<%= sort === 'isSuspended' && order === 'asc' ? 'desc' : 'asc' %>&status=<%= status %>" class="text-white text-decoration-none">
+                      Status
+                      <% if (sort === 'isSuspended') { %>
+                        <%= order === 'asc' ? '↑' : '↓' %>
+                      <% } %>
+                    </a>
+                  </th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (users.length > 0) { %>
+                  <% users.forEach((element, index) => { %>
+                    <tr>
+                      <td><%= index + 1 + (page - 1) * 100 %></td>
+                      <td><%= element.fullname %></td>
+                      <td><%= element.email %></td>
+                      <td><%= element.country %></td>
+                      <td><%= element.tel %></td>
+                      <td>
+                        <span class="badge <%= element.isSuspended ? 'bg-danger' : 'bg-success' %>">
+                          <%= element.isSuspended ? 'Suspended' : 'Active' %>
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <a href="/viewUser/<%= element._id %>" class="btn btn-sm btn-primary" title="View">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                          <a href="/editUser/<%= element._id %>" class="btn btn-sm btn-warning" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                          </a>
+                          <form action="/suspendUser/<%= element._id %>" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm <%= element.isSuspended ? 'btn-success' : 'btn-secondary' %>" title="<%= element.isSuspended ? 'Activate' : 'Suspend' %>">
+                              <i class="bi <%= element.isSuspended ? 'bi-play-fill' : 'bi-pause-fill' %>"></i>
+                            </button>
+                          </form>
+                          <form action="/deleteUser/<%= element._id %>?_method=DELETE" method="POST" class="d-inline delete-form">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                              <i class="bi bi-trash"></i>
+                            </button>
+                          </form>
+                          <!-- New: Custom Notification Button -->
+                          <button class="btn btn-sm btn-info send-notification" data-userid="<%= element._id %>" data-username="<%= element.fullname %>">Notify</button>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="7" class="text-center py-4">No users found in the database!</td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <% if (totalPages > 1) { %>
+        <nav aria-label="Pagination" class="mt-4">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= page === 1 ? 'disabled' : '' %>">
+              <a class="page-link" href="<%= page === 1 ? '#' : `?page=${page - 1}&sort=${sort}&order=${order}&status=${status}` %>" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= page === i ? 'active' : '' %>">
+                <a class="page-link" href="?page=<%= i %>&sort=<%= sort %>&order=<%= order %>&status=<%= status %>"><%= i %></a>
+              </li>
+            <% } %>
+            <li class="page-item <%= page === totalPages ? 'disabled' : '' %>">
+              <a class="page-link" href="<%= page === totalPages ? '#' : `?page=${page + 1}&sort=${sort}&order=${order}&status=${status}` %>" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <% } %>
+
+      <!-- New: Custom Notification Modal -->
+      <div class="modal fade" id="customNotificationModal" tabindex="-1" aria-labelledby="customNotificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content" style="background-color: #171717; color: #fff;">
+            <div class="modal-header" style="border-bottom: 1px solid #333;">
+              <h5 class="modal-title" id="customNotificationModalLabel">Send Custom Notification</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="" method="POST" id="customNotificationForm">
+              <div class="modal-body">
+                <input type="hidden" id="targetUserId" name="userId">
+                <div class="mb-3">
+                  <label for="notificationTitle" class="form-label">Title</label>
+                  <input type="text" class="form-control" id="notificationTitle" name="title" required>
+                </div>
+                <div class="mb-3">
+                  <label for="notificationMessage" class="form-label">Message</label>
+                  <textarea class="form-control" id="notificationMessage" name="message" rows="3" required></textarea>
+                </div>
+              </div>
+              <div class="modal-footer" style="border-top: 1px solid #333;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Send</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- New: Admin Notification Modal -->
+      <div class="modal fade" id="adminNotificationModal" tabindex="-1" aria-labelledby="adminNotificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content" style="background-color: #171717; color: #fff;">
+            <div class="modal-header" style="border-bottom: 1px solid #333;">
+              <h5 class="modal-title" id="adminNotificationModalLabel">Admin Notifications</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="adminNotificationList">
+              <!-- Admin notifications loaded here -->
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const socket = io();
+
+    // Ensure Bootstrap modals are initialized properly
+    var bootstrapScript = document.createElement('script');
+    bootstrapScript.src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
+    document.head.appendChild(bootstrapScript);
+
+    // Join admin room for notifications
+    socket.emit('adminJoin'); // Reuse admin join for notifications
+
+    // Load admin notifications
+    fetch('/notifications')
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const container = doc.getElementById('adminNotifications-container');
+        if (container) {
+          document.getElementById('adminNotificationList').innerHTML = container.innerHTML;
+          // Set initial badge count
+          const items = document.querySelectorAll('#adminNotificationList .notification-item').length;
+          const badge = document.getElementById('adminNotificationBadge');
+          badge.textContent = items;
+          badge.style.display = items > 0 ? 'block' : 'none';
+        }
+      })
+      .catch(err => console.error('Failed to load notifications:', err));
+
+    // Update admin badge for system notifications only
+    socket.on('newNotification', (notification) => {
+      if (!notification.user) { // Only system notifications (user: null)
+        // Show popup
+        Swal.fire({
+          icon: 'info',
+          title: notification.title,
+          text: notification.message,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true,
+          background: '#171717',
+          color: '#fff'
+        });
+
+        // Add to list
+        const listItem = document.createElement('div');
+        listItem.className = 'notification-item p-3 border-bottom';
+        listItem.style.backgroundColor = '#212529';
+        listItem.style.color = '#fff';
+        listItem.innerHTML = `
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1">${notification.title}</h6>
+              <p class="mb-1">${notification.message}</p>
+              <small class="text-muted">${new Date(notification.createdAt).toLocaleString()}</small>
+            </div>
+            <span class="badge bg-info">System</span>
+          </div>
+        `;
+        document.getElementById('adminNotificationList').prepend(listItem);
+
+        // Update count
+        const badge = document.getElementById('adminNotificationBadge');
+        let currentCount = parseInt(badge.textContent) || 0;
+        badge.textContent = currentCount + 1;
+        badge.style.display = 'block';
+      }
+    });
+
+    // Toggle admin modal
+    document.getElementById('adminNotificationToggle').addEventListener('click', (e) => {
+      e.preventDefault();
+      // Reload notifications before showing modal for freshness
+      fetch('/notifications')
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const container = doc.getElementById('adminNotifications-container');
+          if (container) {
+            document.getElementById('adminNotificationList').innerHTML = container.innerHTML;
+            // Update badge
+            const items = document.querySelectorAll('#adminNotificationList .notification-item').length;
+            const badge = document.getElementById('adminNotificationBadge');
+            badge.textContent = items;
+            badge.style.display = items > 0 ? 'block' : 'none';
+          }
+        })
+        .catch(err => console.error('Failed to reload notifications:', err))
+        .finally(() => {
+          var modal = new bootstrap.Modal(document.getElementById('adminNotificationModal'));
+          modal.show();
+        });
+    });
+
+    // Custom notification form
+    document.querySelectorAll('.send-notification').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const userId = e.target.dataset.userid;
+        const username = e.target.dataset.username;
+        document.getElementById('targetUserId').value = userId;
+        document.getElementById('customNotificationModalLabel').textContent = `Send Notification to ${username}`;
+        var modal = new bootstrap.Modal(document.getElementById('customNotificationModal'));
+        modal.show();
+      });
+    });
+
+    document.getElementById('customNotificationForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const userId = formData.get('userId');
+      const params = new URLSearchParams();
+      for (let [key, value] of formData.entries()) {
+        params.append(key, value);
+      }
+      fetch(`/send-custom-notification/${userId}`, {
+        method: 'POST',
+        body: params,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(data => {
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: data.error || 'Failed to send notification',
+              background: '#212529',
+              color: '#fff'
+            });
+          });
+        }
+        var modalInstance = bootstrap.Modal.getInstance(document.getElementById('customNotificationModal'));
+        if (modalInstance) {
+          modalInstance.hide();
+        }
+        e.target.reset();
+        if (res.redirected) {
+          window.location.href = res.url;
+        } else {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Custom notification sent successfully',
+            background: '#212529',
+            color: '#fff'
+          });
+        }
+      })
+      .catch(err => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to send notification',
+          background: '#212529',
+          color: '#fff'
+        });
+        console.error(err);
+      });
+    });
+  });
+</script>
+
+</section>
+
+
+<style>
+  /* Custom styles to enhance Bootstrap */
+  body {
+    background-color: #f8f9fa;
+  }
+
+  .table th a:hover {
+    text-decoration: underline;
+  }
+
+  .badge {
+    font-size: 0.9rem;
+    padding: 0.4em 0.8em;
+  }
+
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .table-responsive {
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .card {
+    border: none;
+    border-radius: 0.5rem;
+  }
+
+  .pagination .page-link {
+    transition: all 0.3s ease;
+  }
+
+  .pagination .page-item.active .page-link {
+    background-color: #286090;
+    border-color: #286090;
+  }
+
+  .pagination .page-item.disabled .page-link {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .form-control, .form-select {
+    border-radius: 0.5rem;
+  }
+
+  .input-group-text {
+    border-radius: 0.5rem 0 0 0.5rem;
+  }
+
+  .btn-primary {
+    background-color: #286090;
+    border-color: #286090;
+  }
+
+  .btn-primary:hover {
+    background-color: #1f4a6b;
+    border-color: #1f4a6b;
+  }
+
+  @media (max-width: 576px) {
+    .d-flex.gap-2 {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-sm {
+      margin: 0.2rem;
+    }
+  }
+</style>  
+
+<script>
+  // Handle status filter change
+  document.getElementById('statusFilter').addEventListener('change', function() {
+    const status = this.value;
+    const url = new URL(window.location.href);
+    url.searchParams.set('status', status);
+    url.searchParams.set('page', 1);
+    window.location.href = url.toString();
+  });
+</script>
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js" integrity="sha384-+sLIOodYLS7CIrQpBjl+C7nPvqq+FbNUBDunl/OZv93DB7Ln/533i8e/mZXLi/P+" crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="assets5i/custom/custom.js"></script>
+
+
+
+ <script src="assets0/notify.js"></script>
+ <script type="text/javascript" src="assets0/custom/custom.js"></script>
+ <!-- Optional JavaScript -->
+    <script src="../plugins/jquery-3.1.1.min.js"></script>
+    <script src="../plugins/sweetalerts/sweetalert2.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.js"></script>
+
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <!--<script src="js/jquery.min.js"></script>
+    <script src="js/popper.min.js"></script>-->
+    <script src="js/bootstrap.min.js"></script>
+    <!-- Appear JavaScript -->
+    <script src="js/jquery.appear.js"></script>
+    <!-- Countdown JavaScript -->
+    <script src="js/countdown.min.js"></script>
+    <!-- Counterup JavaScript -->
+    <script src="js/waypoints.min.js"></script>
+    <script src="js/jquery.counterup.min.js"></script>
+    <!-- Wow JavaScript -->
+    <script src="js/wow.min.js"></script>
+    <!-- Apexcharts JavaScript -->
+    <script src="js/apexcharts.js"></script>
+    <!-- Slick JavaScript -->
+    <script src="js/slick.min.js"></script>
+    <!-- Select2 JavaScript -->
+    <script src="js/select2.min.js"></script>
+    <!-- Owl Carousel JavaScript -->
+    <script src="js/owl.carousel.min.js"></script>
+    <!-- Magnific Popup JavaScript -->
+    <script src="js/jquery.magnific-popup.min.js"></script>
+    <!-- Smooth Scrollbar JavaScript -->
+    <script src="js/smooth-scrollbar.js"></script>
+    <!-- lottie JavaScript -->
+    <script src="js/lottie.js"></script>
+    <!-- am core JavaScript -->
+    <script src="js/core.js"></script>
+    <!-- am charts JavaScript -->
+    <script src="js/charts.js"></script>
+    <!-- am animated JavaScript -->
+    <script src="js/animated.js"></script>
+    <!-- am kelly JavaScript -->
+    <script src="js/kelly.js"></script>
+    <!-- am maps JavaScript -->
+    <script src="js/maps.js"></script>
+    <!-- am worldLow JavaScript -->
+    <script src="js/worldLow.js"></script>
+    <!-- Style Customizer -->
+    <script src="js/style-customizer.js"></script>
+    <!-- Chart Custom JavaScript -->
+    <script src="js/chart-custom.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="js/custom.js"></script>
+    
+    <script type="text/javascript" src="nt/nt.js"></script>
+    <script type="text/javascript" src="nt/f.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Handle status filter change
+    document.getElementById('statusFilter').addEventListener('change', function() {
+      const status = this.value;
+      const url = new URL(window.location.href);
+      url.searchParams.set('status', status);
+      url.searchParams.set('page', 1);
+      window.location.href = url.toString();
+    });
+
+    // Handle delete confirmation with SweetAlert2
+    document.querySelectorAll('.delete-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        Swal.fire({
+          title: 'Are you sure?',
+          text: 'Do you want to delete this user? This action cannot be undone.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: 'Yes, delete it!',
+          background: '#212529',
+          color: '#fff'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.submit();
+          }
+        });
+      });
+    });
+  </script>
+
+
+
+
+</body>
+
+
+<svg id="SvgjsSvg1001" width="2" height="0" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" style="overflow: hidden; top: -100%; left: -100%; position: absolute; opacity: 0;"><defs id="SvgjsDefs1002"></defs><polyline id="SvgjsPolyline1003" points="0,0"></polyline><path id="SvgjsPath1004" d="M0 0 "></path></svg>
+<iframe id="chat-application-iframe" title="Smartsupp" aria-hidden="true" style="display: block; position: fixed; top: 0px; left: 0px; width: 1px; height: 1px; opacity: 0; border: none; z-index: -1; pointer-events: none;"></iframe>
+<div id="smartsupp-widget-container"><!----><!----><!----> <!----><!----> <!----><div data-testid="widgetButtonFrame" style="border-radius: 9999px; box-shadow: rgba(0, 0, 0, 0.06) 0px 1px 6px, rgba(0, 0, 0, 0.12) 0px 2px 32px; color-scheme: normal; height: 56px; position: fixed; bottom: 24px; left: initial; right: 12px; z-index: 10000000; width: 56px;"><iframe allowfullscreen="" scrolling="no" id="widgetButtonFrame" title="Smartsupp widget button" style="position: absolute; width: 100%; height: 100%; border: none; display: block; text-align: left; margin: 0px; padding: 0px; top: 0px; left: 0px; opacity: 1;"></iframe><!----></div><!----> <!----><!----> <!----><!----><!---->
+</div>
+</body>
+</html>
+
+and viewUser template page like this
+
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="csrf-token" content="QfZeg2Tb7pQvwUg6AJO4IpDW0DTYJ0sCoPPtd6O8">
+  <title>CAPITAL SWIFT BANK | Fund your account</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Swift and Secure Money Transfer to any UK bank account will become a breeze with PIXEL VERSE BANK." />
+  <meta name="csrf_token" content="QfZeg2Tb7pQvwUg6AJO4IpDW0DTYJ0sCoPPtd6O8" id="csrf_token" data-turbolinks-permanent>
+  <link rel="shortcut icon" href="/storage/app/public/photos/vfrIHvABt6idQp5IfHdDn5z1qz6Ul3GBMRL2x0tE.jpg" />
+  <link rel="stylesheet" href="/dash2/libs/%40fortawesome/fontawesome-pro/css/all.min.css">
+  <link href="/dash2/konanauth/public/asset/fonts/fontawesome/css/all.css" rel="stylesheet" type="text/css">
+  <link href="/dash2/public/dashboard/plugins/custom/leaflet/leaflet.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="/dash2/konanauth/public/dashboard/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="/dash2/konanauth/public/dashboard/css/style.bundle.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css" />
+  <link rel="stylesheet" href="/dash2/konanauth/public/vendor/megaphone/css/megaphone.css">
+  <style >[wire\:loading], [wire\:loading\.delay], [wire\:loading\.inline-block], [wire\:loading\.inline], [wire\:loading\.block], [wire\:loading\.flex], [wire\:loading\.table], [wire\:loading\.grid], [wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short], [wire\:loading\.delay\.long], [wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest] {display:none;}[wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}input:-webkit-autofill, select:-webkit-autofill, textarea:-webkit-autofill {animation-duration: 50000s;animation-name: livewireautofill;}@keyframes  livewireautofill { from {} }</style>
+    
+    <style>
+        @font-face {
+        font-family: Graphik;
+        font-weight: 400;
+        src: url("/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf");
+    }
+
+    
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 700;
+        src: url("/dash2/konanauth/public/asset/fonts/Graphik/GraphikMedium.otf");
+    }
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 800;
+        src: url("/dash2/konanauth/public/asset/fonts/Graphik/GraphikBold.otf ");
+    }
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 900;
+        src: url("dash2/konanauth/public/asset/fonts/Graphik/GraphikMedium.otf");
+    }
+</style>
+
+<style>
+
+.iti {
+    position: relative;
+    display: block;
+}
+
+body
+{
+    font-family: "Graphik", sans-serif;
+}
+pre,code,kbd,samp
+{
+    font-family: "Graphik", Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+.tooltip
+{
+    font-family: "Graphik", sans-serif;
+}
+.popover
+{
+    font-family: "Graphik", sans-serif;
+}
+.text-monospace
+{
+    font-family: "Graphik", Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+}
+.btn-group-colors > .btn:before
+{
+    font-family: "Graphik", sans-serif;
+}
+.has-danger:after
+{
+    font-family: 'Graphik';
+}
+.fc-icon
+{
+    font-family: "Graphik", sans-serif;
+}
+.ql-container
+{
+    font-family: "Graphik", sans-serif;
+}
+</style>
+
+<style>
+    .page-loading {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        -webkit-transition: all .4s .2s ease-in-out;
+        transition: all .4s .2s ease-in-out;
+        background-color:#ffffff;
+        visibility: hidden;
+        z-index: 9999;
+    }
+
+    .page-loading.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .page-loading-inner {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        -webkit-transition: opacity .2s ease-in-out;
+        transition: opacity .2s ease-in-out;
+        opacity: 0;
+    }
+
+    .page-loading.active>.page-loading-inner {
+        opacity: 1;
+    }
+
+    .page-loading-inner>span {
+        display: block;
+        font-size: 1rem;
+        font-weight: normal;
+        color: #9397ad;
+    }
+
+    .page-spinner {
+        display: inline-block;
+        width: 4.75rem;
+        height: 4.75rem;
+        margin-bottom: .75rem;
+        vertical-align: text-bottom;
+        border: .15em solid #0a24f4;
+        border-right-color: transparent;
+        border-radius: 50%;
+        -webkit-animation: spinner .75s linear infinite;
+        animation: spinner .75s linear infinite;
+    }
+
+    @-webkit-keyframes spinner {
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes  spinner {
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+</style></head>
+
+<body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled aside-fixed aside-default-enabled">
+ 
+    <div class="page-loading active text-indigo">
+    <div class="page-loading-inner">
+      <div class="page-spinner"></div><span></span>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center">
+     
+    <div id="google_translate_element"></div>
+    
+    </div>
+  
+  <div class="d-flex flex-column flex-root">
+    <div class="page d-flex flex-row flex-column-fluid">
+      <div id="kt_aside" class="aside aside-default bg-white aside-hoverable" data-kt-drawer="true" data-kt-drawer-name="aside" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_aside_toggle">
+        <div class="aside-logo flex-column-auto pt-9 pb-5" id="kt_aside_logo">
+          <a href="/">
+            <img alt="Logo" src="/storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" class="logo-default" style="height:auto; max-width:30%;"/>
+            <img alt="Logo" src="/storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" class="h-50px logo-minimize" style="height:auto; max-width:30%;"/>
+          </a>
+        </div>
+        <div class="aside-menu flex-column-fluid">
+          <div class="menu menu-column menu-fit menu-rounded menu-title-dark menu-icon-dark menu-state-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500 fw-bold fs-5 my-5 mt-lg-2 mb-lg-0" id="kt_aside_menu" data-kt-menu="true">
+            <div class="menu-fit hover-scroll-y me-lg-n5 pe-lg-5" id="kt_aside_menu_wrapper" data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-height="auto" data-kt-scroll-wrappers="#kt_aside_menu" data-kt-scroll-offset="20px" data-kt-scroll-dependencies="#kt_aside_logo, #kt_aside_footer">
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link  active " href="/adminiRoute">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-home fs-3"></i>
+                  </span>
+                  <span class="menu-title">Dashboard</span>
+                </a>
+              </div>
+           
+            
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allTransfer">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-send fs-3"></i>
+                  </span>
+                  <span class="menu-title">all Transfer</span>
+                </a>
+              </div>
+
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allFunding">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-download fs-3"></i>
+                  </span>
+                  <span class="menu-title">Deposit</span>
+                </a>
+            </div>
+
+            <div class="menu-item"><!--begin:Menu link-->
+              <a class="menu-link " href="/allCards">
+                <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                  <i class="fal fa-credit-card fs-3"></i>
+                </span>
+                <span class="menu-title">all Cards</span>
+              </a>
+            </div>
+              
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allLoans">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-coin fs-3"></i>
+                  </span>
+                  <span class="menu-title">all Loan</span>
+                </a>
+              </div>
+              </div>
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allTickets">
+                  <span class="menu-icon">
+                    <i class="fal fa-clipboard-list-check fs-3"></i>
+                  </span>
+                  <span class="menu-title"> Support Ticket</span>
+                </a>
+              </div>
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/logout">
+                  <span class="menu-icon">
+                    <i class="fal fa-sign-out fs-3"></i>
+                  </span>
+                  <span class="menu-title">Logout</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="aside-footer flex-column-auto" id="kt_aside_footer"></div>
+      </div>
+    </div>
+  </div>
+  <div class="wrapper d-flex flex-column flex-row-fluid" id="kt_wrapper">
+    <!--begin::Header-->
+    <div id="kt_header" class="header" data-kt-sticky="true" data-kt-sticky-name="header" data-kt-sticky-offset="{default: '200px', lg: '300px'}">
+      <!--begin::Container-->
+      <div class="container-fluid d-flex align-items-stretch justify-content-between">
+        <!--begin::Logo bar-->
+        <div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0">
+          <!--begin::Logo-->
+          <a href="/dashboard" class="d-lg-none">
+            <img alt="Logo" src="storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" style="height:auto; max-width:30%;"/>
+          </a>
+          <!--end::Logo-->
+        </div>
+        <!--end::Logo bar-->
+        <!--begin::Topbar-->
+        <div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1">
+          <!--begin::Search-->
+          <div class="d-flex align-items-stretch">
+
+          </div>
+          <!--end::Search-->
+          <!--begin::Toolbar wrapper-->
+          <div class="d-flex align-items-stretch flex-shrink-0">
+            <div class="megaphone d-flex align-items-center ms-1 ms-lg-3">
+    <div class="btn btn-icon btn-active-light-primary position-relative w-30px h-30px w-md-40px h-md-40px" id="kt_notify_button">
+    
+</div></div>
+
+            <div class="d-flex align-items-center ms-2 ms-lg-3" id="kt_header_user_menu_toggle">
+              <!--begin::Menu wrapper-->
+              <div class="cursor-pointer symbol symbol-50px symbol-circle" data-kt-menu-trigger="{default: 'click'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+     <div class="symbol-label fs-2 fw-bolder text-dark"> <img alt="" src="/IMG_UPLOADS/<%=user.image%>" width="50" height="50" style='border-radius: 50%;'></div>
+              </div>
+              <!--begin::User account menu-->
+              <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true" style="">
+                <!--begin::Menu item-->
+                <div class="menu-item px-3">
+                  <div class="menu-content d-flex align-items-center px-3">
+                    <!--begin::Avatar-->
+                    <div class="symbol symbol-50px symbol-circle me-5">
+                      <div class="symbol-label fs-2 fw-bolder text-dark"><img alt="" src="/IMG_UPLOADS/<%=user.image%>" width="50" height="50" style='border-radius: 50%;'></div>
+                    </div>
+                    <!--end::Avatar-->
+
+                    <!--begin::Username-->
+                    <div class="d-flex flex-column">
+                      <div class="fw-bolder d-flex align-items-center fs-5">
+                        <%=user.firstname%> <%=user.lastname%>
+                      </div>
+
+                      <!-- <div class="fw-semibold text-hover-primary fs-5">
+                        <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="197d7c7476597b7676747a71786b6d37777c6d">[email&#160;protected]</a>
+                      </div> -->
+                    </div>
+                    <!--end::Username-->
+                  </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="menu-item px-5 mb-0">
+                  <a href="/logout" class="menu-link px-5 py-3">
+                    <i class="fal fa-sign-out me-3"></i> Sign Out
+                  </a>
+                
+                </div>
+                <!--end::Menu item-->
+              </div>
+              <!--end::User account menu-->
+              <!--end::Menu wrapper-->
+            </div>
+            <!--end::User -->
+            <!--begin::Aside Toggle-->
+            <div class="d-flex align-items-center d-lg-none ms-1 ms-lg-3">
+              <div class="btn btn-icon btn-icon-dark btn-active-light-primary w-30px h-30px w-md-40px h-md-40px" id="kt_aside_toggle">
+                <!--begin::Svg Icon | path: icons/duotone/Text/Menu.svg-->
+                <span class="svg-icon svg-icon-2x">
+                  <i class="fa-thin fa-bars"></i>
+                </span>
+                <!--end::Svg Icon-->
+              </div>
+            </div>
+            <!--end::Aside Toggle-->
+          </div>
+          <!--end::Toolbar wrapper-->
+        </div>
+        <!--end::Topbar-->
+      </div>
+      <!--end::Container-->
+    </div>
+    
+        
+<div class="content fs-6 d-flex flex-column flex-column-fluid" id="kt_content">
+	<div>
+    </div>    	<div class="card-body text-wrap">
+	
+		
+<div class="post fs-6 d-flex flex-column-fluid min-vh-100" id="kt_post">
+
+
+  <div class="container col-lg-8">
+  
+    <div class="col-lg-9 col-md-8">
+
+                  
+        <div class="row mb-5 g-3">
+           <div class="col-md-12">
+              <!-- CONTENT -->
+              <div class="col py-3" style="background-color: black;">
+
+                  <div class="row">
+                    <div class="col">
+                      <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                          <li class="breadcrumb-item active"><%= user.firstname %><%= user.lastname %></li>
+                        </ol>
+                      </nav>
+                    </div>
+                    <div class="col text-end fw-lighter">
+                      <b>Last Updated</b>
+                      <b class="text-white" >UserId: <%=user._id%></b>
+                    </div>
+                  </div>
+                
+                </div>
+                
+                <ul class="list-group">
+                
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b>Name:</b></div>
+                      <div class="col"><%= user.firstname %><%= user.lastname %> </div>
+                    </div>
+                  </li>
+                
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b>Tel:</b></div>
+                      <div class="col"><%= user.tel %></div>
+                    </div>
+                  </li>
+                
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b>Email:</b></div>
+                      <div class="col"><%= user.email %></div>
+                    </div>
+                  </li>
+                     <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">Account No:</b></div>
+                      <div class="col" style="color: black;"><%= user.account_no %></div>
+                    </div>
+                  </li>  
+                   <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">Country:</b></div>
+                      <div class="col" style="color: black; display: flex; flex-wrap: wrap;"><%= user.country %></div>
+                    </div>
+                  </li>
+                  
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">Transfer ID:</b></div>
+                      <div class="col" style="color: black; display: flex; flex-wrap: wrap;"><%= user.transfers %></div>
+                    </div>
+                  </li>
+                  
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">Deposit ID:</b></div>
+                      <div class="col" style="color: black; display: flex; flex-wrap: wrap;"><%= user.deposits %></div>
+                    </div>
+                  </li>
+
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">Support's ID:</b></div>
+                      <div class="col" style="color: black; display: flex; flex-wrap: wrap;"><%= user.tickets %></div>
+                    </div>
+                  </li>
+                                    
+                  
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Loans ID:</b></div>
+                      <div class="col" style="color: black; display: flex; flex-wrap: wrap;"><%= user.cards %></div>
+                    </div>
+                  </li>
+          
+                   <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Password:</b></div>
+                      <div class="col" ><%= user.password%> </div>
+                    </div>
+                  </li>
+          
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b > Balance:</b></div>
+                      <div class="col" ><%=user.balance%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b > Date of birth:</b></div>
+                      <div class="col" ><%=user.Dob%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >gender:</b></div>
+                      <div class="col" ><%=user.gender%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b > currency:</b></div>
+                      <div class="col" ><%=user.currency%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Account Type:</b></div>
+                      <div class="col" ><%=user.account%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >address:</b></div>
+                      <div class="col" ><%=user.address%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >state:</b></div>
+                      <div class="col" ><%=user.state%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >postal:</b></div>
+                      <div class="col" ><%=user.postal%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >pin:</b></div>
+                      <div class="col" ><%=user.pin%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >bank_name:</b></div>
+                      <div class="col" ><%=user.bank_name%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Virtual card:</b></div>
+                      <div class="col" ><%=user.cardNumb%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >sortcode:</b></div>
+                      <div class="col" ><%=user.sortcode%> </div>
+                    </div>
+                  </li>
+                
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >fees:</b></div>
+                      <div class="col" ><%= user.fees%> </div>
+                    </div>
+                  </li>
+          
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Deposit AccNo:</b></div>
+                      <div class="col" ><%=user.deacc_no%> </div>
+                    </div>
+                  </li>
+          
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Deposit Bank:</b></div>
+                      <div class="col" ><%= user.deacc_bank%> </div>
+                    </div>
+                  </li>
+      
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b style="color: black;">swift code:</b></div>
+                      <div class="col" ><%= user.deacc_swift%> </div>
+                    </div>
+                  </li>
+      
+                  
+          
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b >Date Created:</b></div>
+                      <div class="col" ><%= user.createdAt%> </div>
+                    </div>
+                  </li>
+                
+                  <li class="list-group-item"> 
+                    <div class="row">
+                      <div class="col" style="max-width: 140px"> <b>Date Modified:</b></div>
+                      <div class="col"><%= user.updatedAt%> </div>
+                    </div>
+                  </li>
+                
+                </ul>
+             
+
+      <!-- end of container -->
+	</div>
+  </div>
+</div>
+</div>
+  </div>
+  
+
+    <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
+      <!--begin::Container-->
+      <div class="container-fluid d-flex flex-column flex-md-row flex-stack">
+        <!--begin::Copyright-->
+        <div class="text-dark order-2 order-md-1">
+          <span class="text-muted fw-bold me-2">2023 ©</span>
+          <a href="/" target="_blank" class="text-gray-800 text-hover-primary">CAPITAL SWIFT BANK</a>
+        </div>
+        <!--end::Copyright-->
+        <!--begin::Menu-->
+       
+        <!--end::Menu-->
+      </div>
+      <!--end::Container-->
+    </div>
+    <!--end::Footer-->
+  </div>
+
+  <script src="/dash2/konanauth/public/dashboard/plugins/global/plugins.bundle.js"></script>
+  <script src="/dash2/konanauth/plugins/global/plugins.bundle.js"></script>
+  <script src="/dash2/konanauth/public/dashboard/js/scripts.bundle.js"></script>
+  <script src="/dash2/konanauth/public/asset/fonts/fontawesome/js/all.js"></script>
+  <script src="/dash2/konanauth/public/dashboard/js/custom/general.js"></script>
+  
+  
+  <script src="/dash2/konanauth/public/asset/fonts/fontawesome/js/all.js"></script>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
+</script>
+
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+
+</html>
+
+
+<script src="/dash2/konanauth/public/dashboard/js/alpine.js"></script>
+
+ 
+<script>
+  (function() {
+    window.onload = function() {
+      const preloader = document.querySelector('.page-loading');
+      preloader.classList.remove('active');
+      setTimeout(function() {
+        preloader.remove();
+      }, 1000);
+    };
+  })();
+</script>
+
+
+
+and my editUser template like this
+
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="csrf-token" content="QfZeg2Tb7pQvwUg6AJO4IpDW0DTYJ0sCoPPtd6O8">
+  <title>CAPITAL SWIFT BANK | Fund your account</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Swift and Secure Money Transfer to any UK bank account will become a breeze with PIXEL VERSE BANK." />
+  <meta name="csrf_token" content="QfZeg2Tb7pQvwUg6AJO4IpDW0DTYJ0sCoPPtd6O8" id="csrf_token" data-turbolinks-permanent>
+  <link rel="shortcut icon" href="/storage/app/public/photos/vfrIHvABt6idQp5IfHdDn5z1qz6Ul3GBMRL2x0tE.jpg" />
+  <link rel="stylesheet" href="/dash2/libs/%40fortawesome/fontawesome-pro/css/all.min.css">
+  <link href="/dash2/konanauth/public/asset/fonts/fontawesome/css/all.css" rel="stylesheet" type="text/css">
+  <link href="/dash2/public/dashboard/plugins/custom/leaflet/leaflet.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="/dash2/konanauth/public/dashboard/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="/dash2/konanauth/public/dashboard/css/style.bundle.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/css/flag-icons.min.css" />
+  <link rel="stylesheet" href="/dash2/konanauth/public/vendor/megaphone/css/megaphone.css">
+  <style >[wire\:loading], [wire\:loading\.delay], [wire\:loading\.inline-block], [wire\:loading\.inline], [wire\:loading\.block], [wire\:loading\.flex], [wire\:loading\.table], [wire\:loading\.grid], [wire\:loading\.inline-flex] {display: none;}[wire\:loading\.delay\.shortest], [wire\:loading\.delay\.shorter], [wire\:loading\.delay\.short], [wire\:loading\.delay\.long], [wire\:loading\.delay\.longer], [wire\:loading\.delay\.longest] {display:none;}[wire\:offline] {display: none;}[wire\:dirty]:not(textarea):not(input):not(select) {display: none;}input:-webkit-autofill, select:-webkit-autofill, textarea:-webkit-autofill {animation-duration: 50000s;animation-name: livewireautofill;}@keyframes  livewireautofill { from {} }</style>
+    
+    <style>
+        @font-face {
+        font-family: Graphik;
+        font-weight: 400;
+        src: url("/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf");
+    }
+
+    
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 700;
+        src: url("/dash2/konanauth/public/asset/fonts/Graphik/GraphikMedium.otf");
+    }
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 800;
+        src: url("/dash2/konanauth/public/asset/fonts/Graphik/GraphikBold.otf ");
+    }
+
+    @font-face {
+        font-family: Graphik;
+        font-weight: 900;
+        src: url("/dash2/konanauth/public/asset/fonts/Graphik/GraphikMedium.otf");
+    }
+</style>
+
+<style>
+
+.iti {
+    position: relative;
+    display: block;
+}
+
+body
+{
+    font-family: "Graphik", sans-serif;
+}
+pre,code,kbd,samp
+{
+    font-family: "Graphik", Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+.tooltip
+{
+    font-family: "Graphik", sans-serif;
+}
+.popover
+{
+    font-family: "Graphik", sans-serif;
+}
+.text-monospace
+{
+    font-family: "Graphik", Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+}
+.btn-group-colors > .btn:before
+{
+    font-family: "Graphik", sans-serif;
+}
+.has-danger:after
+{
+    font-family: 'Graphik';
+}
+.fc-icon
+{
+    font-family: "Graphik", sans-serif;
+}
+.ql-container
+{
+    font-family: "Graphik", sans-serif;
+}
+</style>
+
+<style>
+    .page-loading {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        -webkit-transition: all .4s .2s ease-in-out;
+        transition: all .4s .2s ease-in-out;
+        background-color:#ffffff;
+        visibility: hidden;
+        z-index: 9999;
+    }
+
+    .page-loading.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .page-loading-inner {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        -webkit-transform: translateY(-50%);
+        transform: translateY(-50%);
+        -webkit-transition: opacity .2s ease-in-out;
+        transition: opacity .2s ease-in-out;
+        opacity: 0;
+    }
+
+    .page-loading.active>.page-loading-inner {
+        opacity: 1;
+    }
+
+    .page-loading-inner>span {
+        display: block;
+        font-size: 1rem;
+        font-weight: normal;
+        color: #9397ad;
+    }
+
+    .page-spinner {
+        display: inline-block;
+        width: 4.75rem;
+        height: 4.75rem;
+        margin-bottom: .75rem;
+        vertical-align: text-bottom;
+        border: .15em solid #0a24f4;
+        border-right-color: transparent;
+        border-radius: 50%;
+        -webkit-animation: spinner .75s linear infinite;
+        animation: spinner .75s linear infinite;
+    }
+
+    @-webkit-keyframes spinner {
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+
+    @keyframes  spinner {
+        100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+        }
+    }
+</style></head>
+
+<body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed toolbar-enabled aside-fixed aside-default-enabled">
+ 
+    <div class="page-loading active text-indigo">
+    <div class="page-loading-inner">
+      <div class="page-spinner"></div><span></span>
+    </div>
+  </div>
+  <div class="d-flex justify-content-center">
+     
+    <div id="google_translate_element"></div>
+    
+    </div>
+  
+  <div class="d-flex flex-column flex-root">
+    <div class="page d-flex flex-row flex-column-fluid">
+      <div id="kt_aside" class="aside aside-default bg-white aside-hoverable" data-kt-drawer="true" data-kt-drawer-name="aside" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="{default:'200px', '300px': '250px'}" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_aside_toggle">
+        <div class="aside-logo flex-column-auto pt-9 pb-5" id="kt_aside_logo">
+          <a href="/">
+            <img alt="Logo" src="/storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" class="logo-default" style="height:auto; max-width:30%;"/>
+            <img alt="Logo" src="/storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" class="h-50px logo-minimize" style="height:auto; max-width:30%;"/>
+          </a>
+        </div>
+        <div class="aside-menu flex-column-fluid">
+          <div class="menu menu-column menu-fit menu-rounded menu-title-dark menu-icon-dark menu-state-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500 fw-bold fs-5 my-5 mt-lg-2 mb-lg-0" id="kt_aside_menu" data-kt-menu="true">
+            <div class="menu-fit hover-scroll-y me-lg-n5 pe-lg-5" id="kt_aside_menu_wrapper" data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-height="auto" data-kt-scroll-wrappers="#kt_aside_menu" data-kt-scroll-offset="20px" data-kt-scroll-dependencies="#kt_aside_logo, #kt_aside_footer">
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link  active " href="/adminiRoute">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-home fs-3"></i>
+                  </span>
+                  <span class="menu-title">Dashboard</span>
+                </a>
+              </div>
+           
+            
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allTransfer">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-send fs-3"></i>
+                  </span>
+                  <span class="menu-title">all Transfer</span>
+                </a>
+              </div>
+
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allFunding">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-download fs-3"></i>
+                  </span>
+                  <span class="menu-title">Deposit</span>
+                </a>
+            </div>
+
+            <div class="menu-item"><!--begin:Menu link-->
+              <a class="menu-link " href="/allCards">
+                <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                  <i class="fal fa-credit-card fs-3"></i>
+                </span>
+                <span class="menu-title">all Cards</span>
+              </a>
+            </div>
+              
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allLoans">
+                  <span class="menu-icon"><!--begin::Svg Icon | path: icons/duotune/general/gen014.svg-->
+                    <i class="fal fa-coin fs-3"></i>
+                  </span>
+                  <span class="menu-title">all Loan</span>
+                </a>
+              </div>
+              </div>
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/allTickets">
+                  <span class="menu-icon">
+                    <i class="fal fa-clipboard-list-check fs-3"></i>
+                  </span>
+                  <span class="menu-title"> Support Ticket</span>
+                </a>
+              </div>
+
+              <div class="menu-item"><!--begin:Menu link-->
+                <a class="menu-link " href="/logout">
+                  <span class="menu-icon">
+                    <i class="fal fa-sign-out fs-3"></i>
+                  </span>
+                  <span class="menu-title">Logout</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="aside-footer flex-column-auto" id="kt_aside_footer"></div>
+      </div>
+    </div>
+  </div>
+  <div class="wrapper d-flex flex-column flex-row-fluid" id="kt_wrapper">
+    <!--begin::Header-->
+    <div id="kt_header" class="header" data-kt-sticky="true" data-kt-sticky-name="header" data-kt-sticky-offset="{default: '200px', lg: '300px'}">
+      <!--begin::Container-->
+      <div class="container-fluid d-flex align-items-stretch justify-content-between">
+        <!--begin::Logo bar-->
+        <div class="d-flex align-items-center flex-grow-1 flex-lg-grow-0">
+          <!--begin::Logo-->
+          <a href="/dashboard" class="d-lg-none">
+            <img alt="Logo" src="storage/app/public/photos/gkgr73S0C0AVl3XX0UUQh8Ffr0fmzCSK4EhmlcPQ.jpg" style="height:auto; max-width:30%;"/>
+          </a>
+          <!--end::Logo-->
+        </div>
+        <!--end::Logo bar-->
+        <!--begin::Topbar-->
+        <div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1">
+          <!--begin::Search-->
+          <div class="d-flex align-items-stretch">
+
+          </div>
+          <!--end::Search-->
+          <!--begin::Toolbar wrapper-->
+          <div class="d-flex align-items-stretch flex-shrink-0">
+            <div class="megaphone d-flex align-items-center ms-1 ms-lg-3">
+    <div class="btn btn-icon btn-active-light-primary position-relative w-30px h-30px w-md-40px h-md-40px" id="kt_notify_button">
+    
+</div></div>
+
+            <div class="d-flex align-items-center ms-2 ms-lg-3" id="kt_header_user_menu_toggle">
+              <!--begin::Menu wrapper-->
+              <div class="cursor-pointer symbol symbol-50px symbol-circle" data-kt-menu-trigger="{default: 'click'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
+     <div class="symbol-label fs-2 fw-bolder text-dark"> <img alt="" src="/IMG_UPLOADS/<%=user.image%>" width="50" height="50" style='border-radius: 50%;'></div>
+              </div>
+              <!--begin::User account menu-->
+              <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true" style="">
+                <!--begin::Menu item-->
+                <div class="menu-item px-3">
+                  <div class="menu-content d-flex align-items-center px-3">
+                    <!--begin::Avatar-->
+                    <div class="symbol symbol-50px symbol-circle me-5">
+                      <div class="symbol-label fs-2 fw-bolder text-dark"><img alt="" src="/IMG_UPLOADS/<%=user.image%>" width="50" height="50" style='border-radius: 50%;'></div>
+                    </div>
+                    <!--end::Avatar-->
+
+                    <!--begin::Username-->
+                    <div class="d-flex flex-column">
+                      <div class="fw-bolder d-flex align-items-center fs-5">
+                        <%=user.firstname%> <%=user.lastname%>
+                      </div>
+
+                      <!-- <div class="fw-semibold text-hover-primary fs-5">
+                        <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="197d7c7476597b7676747a71786b6d37777c6d">[email&#160;protected]</a>
+                      </div> -->
+                    </div>
+                    <!--end::Username-->
+                  </div>
+                </div>
+
+                <div class="separator"></div>
+
+                <div class="menu-item px-5 mb-0">
+                  <a href="/logout" class="menu-link px-5 py-3">
+                    <i class="fal fa-sign-out me-3"></i> Sign Out
+                  </a>
+                
+                </div>
+                <!--end::Menu item-->
+              </div>
+              <!--end::User account menu-->
+              <!--end::Menu wrapper-->
+            </div>
+            <!--end::User -->
+            <!--begin::Aside Toggle-->
+            <div class="d-flex align-items-center d-lg-none ms-1 ms-lg-3">
+              <div class="btn btn-icon btn-icon-dark btn-active-light-primary w-30px h-30px w-md-40px h-md-40px" id="kt_aside_toggle">
+                <!--begin::Svg Icon | path: icons/duotone/Text/Menu.svg-->
+                <span class="svg-icon svg-icon-2x">
+                  <i class="fa-thin fa-bars"></i>
+                </span>
+                <!--end::Svg Icon-->
+              </div>
+            </div>
+            <!--end::Aside Toggle-->
+          </div>
+          <!--end::Toolbar wrapper-->
+        </div>
+        <!--end::Topbar-->
+      </div>
+      <!--end::Container-->
+    </div>
+    
+        
+<div class="content fs-6 d-flex flex-column flex-column-fluid" id="kt_content">
+	<div>
+    </div>    	<div class="card-body text-wrap">
+	
+		
+<div class="post fs-6 d-flex flex-column-fluid min-vh-100" id="kt_post">
+
+
+  <div class="container col-lg-8">
+  
+    <div class="col-lg-9 col-md-8">
+
+                  
+        <div class="row mb-5 g-3">
+           <div class="col-md-12">
+              <!-- CONTENT -->
+              <div class="d-flex justify-content-between flex-wrap flex-md nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                  <h1 class="h2 text-gray">Editing:  <%=user.fullname%> </h1>
+                  <div class="btn-toolbar mb-2 mb-md 0">
+                  </div>
+                </div>
+                
+                <div class="col py-3">
+                  <div class="row">
+                    <div class="col">
+                      <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                          <li class="breadcrumb-item active"> <%=user.firstname%><%=user.lastname%> </li>
+                        </ol>
+                      </nav>
+                    </div>
+                    <div class="col text-end fw-lighter">
+                      <!-- <b>Last Updated:</b> -->
+                      <b>UserId:</b> <%=user._id%>
+                    </div>
+                  </div>
+                
+                </div>
+                
+                
+                <form action="/editUser/<%=user._id%>?_method=PUT" method="POST">
+                
+                  <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="fullname">Full Name</label>
+                      <input type="text" class="form-control" id="firstname" name="firstname" value=" <%=user.firstname%> " placeholder="Full Name" readonly required>
+                    </div>
+              
+                    
+                    <div class="col">
+                      <label for="text">Country</label>
+                      <input type="text" class="form-control" id="country" name="country" value=" <%=user.country%> " placeholder="country" readonly required>
+                    </div>
+
+                    </div>
+
+                    <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="text">Account Number</label>
+ <input type="text" class="form-control" id="account_no" name="account_no" value="<%= user.account_no %> " placeholder="Account Number" readonly>
+                    </div>
+                    
+                    <div class="col">
+                      <label for="balance">Balance</label>
+                      <input type="number" class="form-control" id="balance" name="balance" value=" <%=user.balance%> " placeholder="balance">
+                    </div>
+              
+                  </div>
+                    
+                  <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="tel">Telephone</label>
+                      <input type="tel" class="form-control" id="tel" name="tel" value=" <%=user.tel%> " placeholder="Telephone" readonly required>
+                    </div>
+                
+                    <div class="col">
+                      <label for="email">Email</label>
+                      <input type="email" class="form-control" id="email" name="email" value="<%=user.email%>" placeholder="Email" readonly required>
+                    </div>
+                  </div>
+              
+                  <div class="row form-group mb-4">
+              
+                  <div class="col">
+                    <label for="limit">transac limit</label>
+                    <input type="text" class="form-control" id="limit" name="limit" value=" <%=user.limit%> " placeholder="limit">
+                  </div>
+              
+                  <div class="col">
+                    <label for="ref_no">reference no </label>
+                    <input type="text" class="form-control" id="ref_no" name="ref_no" value=" <%=user.ref_no%> " placeholder="ref_no">
+                  </div>
+              
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="currency">currency</label>
+                      <input type="text" class="form-control" id="currency" name="currency" value=" <%=user.currency%> " placeholder=" currency">
+                    </div>
+                   
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="sortcode">sortcode</label>
+                      <input type="text" class="form-control" id="sortcode" name="sortcode" value=" <%=user.sortcode%> " placeholder="sortcode">
+                    </div>
+                    <div class="col">
+                      <label for="deacc_bank">deposit_bank name </label>
+                      <input type="text" class="form-control" id="deacc_bank" name="deacc_bank" value=" <%=user.deacc_bank%> " placeholder="deacc_bank">
+                    </div>
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="deacc_no">depositBank_no</label>
+                      <input type="number" class="form-control" id="deacc_no" name="deacc_no" value=" <%=user.deacc_no%> " placeholder="deacc_no">
+                    </div>
+                    <div class="col">
+                      <label for="deacc_swift">deposit_acc_swift </label>
+                      <input type="text" class="form-control" id="otp" name="deacc_swift" value=" <%=user.deacc_swift%> " placeholder="deacc_swift">
+                    </div>
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="deacc_name">deposit_acc_name</label>
+                      <input type="text" class="form-control" id="deacc_name" name="deacc_name" value=" <%=user.deacc_name%> " placeholder="deacc_name">
+                    </div>
+                    <div class="col">
+                      <label for="pending">All pending transac</label>
+                      <input type="text" class="form-control" id="pending" name="pending" value=" <%=user.pending%> " placeholder="pending">
+                    </div>
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="de_wallet">deposit wallet</label>
+                      <input type="text" class="form-control" id="de_wallet" name="de_wallet" value=" <%=user.de_wallet%> " placeholder=" de_wallet">
+                    </div>
+                    <div class="col">
+                      <label for="cardBal">card Balance</label>
+                      <input type="text" class="form-control" id="cardBal" name="cardBal" value=" <%=user.cardBal%> " placeholder="cardBal">
+                    </div>
+                  </div>
+
+                  <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="cardNumb">card number</label>
+                      <input type="text" class="form-control" id="cardNumb" name="cardNumb" value=" <%=user.cardNumb%> " placeholder="cardNumb">
+                    </div>
+                    <div class="col">
+                      <label for="card_cvv">card cvv </label>
+                      <input type="text" class="form-control" id="card_cvv" name="card_cvv" value=" <%=user.card_cvv%> " placeholder="card_cvv">
+                    </div>
+                </div>
+
+                <div class="row form-group mb-4">
+                    <div class="col">
+                      <label for="card_exp">card expire</label>
+                      <input type="text" class="form-control" id="card_exp" name="card_exp" value=" <%=user.card_exp%> " placeholder="card_exp">
+                    </div>
+                    <div class="col">
+                      <label for="card_type">card type</label>
+                      <input type="text" class="form-control" id="card_type" name="card_type" value=" <%=user.card_type%> " placeholder="card_type">
+                    </div>
+                </div>
+
+
+                <div class="row form-group mb-4"> 
+    <div class="col">
+      <label for="card_status">card status</label>
+      <input type="text" class="form-control" id="card_status" name="card_status" value=" <%=user.
+      card_status%> " placeholder="card_status">
+    </div>
+
+    <div class="col">
+        <label for="total_deposit">total deposit</label>
+        <input type="text" class="form-control" id="total_deposit" name="total_deposit" value="<%=user.
+        total_deposit%>" placeholder="total_deposit">
+      </div>
+</div>
+
+<!-- In editUser.ejs, add before the Update User button -->
+<div class="row form-group mb-4">
+    <div class="col">
+        <label>OTP Verification Status</label>
+        <div class="form-control">
+            <%= user.otpSuspended ? 'Suspended' : 'Active' %>
+            <div class="mt-2">
+                <% if(user.otpSuspended) { %>
+                    <a href="/unsuspendOTP/<%=user._id%>" class="btn btn-success btn-sm">Enable OTP</a>
+                <% } else { %>
+                    <a href="/suspendOTP/<%=user._id%>" class="btn btn-warning btn-sm">Suspend OTP</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+                  <div class="form-group mb-4">
+                    <button type="submit" class="btn btn-primary">Update User</button>
+                
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" id="deleteButton" data-bs-target="#deleteModal">Delete User</button>
+                
+                  </div>
+                
+                </form>
+      
+                      </main>
+      
+              <div class="modal fade" tabindex="-1" role="dialog" id="deleteModal">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <div class="modal-title">You are about to remove a user record.</div>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>
+                        This will remove the User record of <b class="fw-bold"> <%=user.fullname%> </b><br/>
+                        Are you sure?
+                      </p>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <form action="/deleteUser/<%=user._id%> ?_method=DELETE" method="POST" class="position-relative">
+                        <button type="submit" class="btn btn-primary">Yes, Remove User</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+               <!-- CONTENT  END-->
+
+      <!-- end of container -->
+	</div>
+  </div>
+</div>
+</div>
+  </div>
+  
+
+    <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
+      <!--begin::Container-->
+      <div class="container-fluid d-flex flex-column flex-md-row flex-stack">
+        <!--begin::Copyright-->
+        <div class="text-dark order-2 order-md-1">
+          <span class="text-muted fw-bold me-2">2023 ©</span>
+          <a href="/" target="_blank" class="text-gray-800 text-hover-primary">CAPITAL SWIFT BANK</a>
+        </div>
+        <!--end::Copyright-->
+        <!--begin::Menu-->
+       
+        <!--end::Menu-->
+      </div>
+      <!--end::Container-->
+    </div>
+    <!--end::Footer-->
+  </div>
+
+  <script src="/dash2/konanauth/public/dashboard/plugins/global/plugins.bundle.js"></script>
+  <script src="/dash2/konanauth/plugins/global/plugins.bundle.js"></script>
+  <script src="/dash2/konanauth/public/dashboard/js/scripts.bundle.js"></script>
+  <script src="/dash2/konanauth/public/asset/fonts/fontawesome/js/all.js"></script>
+  <script src="/dash2/konanauth/public/dashboard/js/custom/general.js"></script>
+  
+  
+  <script src="/dash2/konanauth/public/asset/fonts/fontawesome/js/all.js"></script>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
+</script>
+
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+
+</html>
+
+
+<script src="/dash2/konanauth/public/dashboard/js/alpine.js"></script>
+
+ 
+<script>
+  (function() {
+    window.onload = function() {
+      const preloader = document.querySelector('.page-loading');
+      preloader.classList.remove('active');
+      setTimeout(function() {
+        preloader.remove();
+      }, 1000);
+    };
+  })();
+</script>
+

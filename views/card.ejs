@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="rM0S3Z97WDuA9e2oJH53hcSrOd6Ipmpa4gvDUvT3">
+    <title>swiftcaptial | Cards</title>
+    <meta name="description" content="Swift and Secure Money Transfer to any UK bank account will become a breeze with swiftcaptial." />
+    <link rel="shortcut icon" href="storage/app/public/photos/TydZYFQSbyrBue0oZ1BQzOAr8y3J4VixErlONeNz.png" />
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Theme & Tailwind -->
+    <script>
+        document.documentElement.style.setProperty('--primary-color', '#0ea5e9');
+        document.documentElement.style.setProperty('--primary-color-dark', '#0369a1');
+        document.documentElement.style.setProperty('--primary-color-light', '#38bdf8');
+        document.documentElement.style.setProperty('--primary-color-lightest', '#38bdf8');
+        document.documentElement.style.setProperty('--secondary-color', '#14b8a6');
+        document.documentElement.style.setProperty('--secondary-color-dark', '#0f766e');
+        document.documentElement.style.setProperty('--secondary-color-light', '#5eead4');
+        document.documentElement.style.setProperty('--accent-color', '#ec4899');
+        document.documentElement.style.setProperty('--text-color', '#111827');
+        document.documentElement.style.setProperty('--bg-color', '#f9fafb');
+        document.documentElement.style.setProperty('--sidebar-bg-color', '#1e293b');
+        document.documentElement.style.setProperty('--sidebar-text-color', '#ffffff');
+        document.documentElement.style.setProperty('--card-bg-color', '#ffffff');
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#38bdf8', 100: '#38bdf8', 200: '#38bdf8', 300: '#38bdf8', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0ea5e9', 700: '#0369a1', 800: '#0369a1', 900: '#0369a1' },
+                        secondary: { 50: '#5eead4', 100: '#5eead4', 200: '#5eead4', 300: '#5eead4', 400: '#5eead4', 500: '#14b8a6', 600: '#14b8a6', 700: '#0f766e', 800: '#0f766e', 900: '#0f766e' },
+                        accent: { 50: '#fdf2f8', 100: '#fce7f3', 200: '#fbcfe8', 300: '#f9a8d4', 400: '#f472b6', 500: '#ec4899', 600: '#db2777', 700: '#be185d', 800: '#9d174d', 900: '#831843' }
+                    },
+                    boxShadow: { 'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)' },
+                    animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                }
+            }
+        }
+    </script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @font-face { font-family: Graphik; font-weight: 400; src: url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf"); }
+        @font-face { font-family: Graphik; font-weight: 500; src: url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikRegular.otf"); }
+        @font-face { font-family: Graphik; font-weight: 700; src: url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikMedium.otf"); }
+        @font-face { font-family: Graphik; font-weight: 800; src: url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikBold.otf"); }
+        @font-face { font-family: Graphik; font-weight: 900; src: url("https://bk1.timdigitalz.com/dash2/konanauth/public/public/asset/fonts/Graphik/GraphikMedium.otf"); }
+        body { font-family: "Graphik", sans-serif; }
+
+        .page-loading { position: fixed; inset: 0; width: 100%; height: 100%; transition: all .4s .2s ease-in-out; background-color: #ffffff; visibility: hidden; z-index: 9999; }
+        .page-loading.active { opacity: 1; visibility: visible; }
+        .page-loading-inner { position: absolute; top: 50%; left: 0; width: 100%; text-align: center; transform: translateY(-50%); transition: opacity .2s ease-in-out; opacity: 0; }
+        .page-loading.active > .page-loading-inner { opacity: 1; }
+        .loading-container { display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .loading-animation { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; margin-bottom: 1rem; position: relative; }
+        .loading-animation .circle { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 4px solid transparent; mix-blend-mode: overlay; animation: rotateCircle 1.5s linear infinite; }
+        .loading-animation .circle:nth-child(1) { border-top-color: var(--primary-color); animation-delay: 0s; }
+        .loading-animation .circle:nth-child(2) { border-right-color: var(--primary-color-light); animation-delay: 0.2s; }
+        .loading-animation .circle:nth-child(3) { border-bottom-color: var(--secondary-color); animation-delay: 0.4s; }
+        .loading-animation .circle:nth-child(4) { border-left-color: var(--primary-color-lightest); animation-delay: 0.6s; }
+        .loading-animation .core { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(45deg, var(--primary-color-light), var(--primary-color-dark)); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); animation: pulse 1s ease-in-out infinite alternate; }
+        .page-loading .text { color: var(--primary-color); font-weight: 500; letter-spacing: 0.05em; margin-top: 0.5rem; font-size: 0.875rem; background: linear-gradient(90deg, var(--primary-color-dark), var(--primary-color-light), var(--primary-color-dark)); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gradient 2s linear infinite; }
+        @keyframes rotateCircle { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { from { transform: scale(0.8); opacity: 0.8; } to { transform: scale(1.2); opacity: 1; } }
+        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Realistic Credit Card Modal Styles */
+        .credit-card {
+            width: 420px;
+            height: 265px;
+            perspective: 1500px;
+            margin: 0 auto;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .card-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .card-logo {
+            font-size: 2.8rem;
+            font-weight: bold;
+            letter-spacing: 6px;
+            opacity: 0.95;
+        }
+
+        .chip {
+            width: 60px;
+            height: 48px;
+            background: linear-gradient(135deg, #c9a96e, #f0d49c);
+            border-radius: 8px;
+            margin: 40px 0 30px;
+        }
+
+        .card-number {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.65rem;
+            letter-spacing: 6px;
+            font-weight: 500;
+            margin: 0 0 40px;
+        }
+
+        .card-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: auto;
+        }
+
+        .card-holder-section,
+        .card-expiry-section {
+            flex: 1;
+        }
+
+        .card-holder-label,
+        .card-expiry-label {
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            opacity: 0.85;
+            margin-bottom: 4px;
+        }
+
+        .holder-name,
+        .expiry-date {
+            font-size: 1.15rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .magnetic-stripe {
+            height: 60px;
+            background: #000;
+            margin: 30px 0 20px;
+        }
+
+        .signature-panel {
+            height: 50px;
+            background: #e0e0e0;
+            margin: 0 0 20px;
+            border-radius: 6px;
+            position: relative;
+        }
+
+        .cvv-box {
+            background: white;
+            color: black;
+            width: 70px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 6px;
+            position: absolute;
+            right: 24px;
+            top: 20px;
+        }
+
+        .issuer-text {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            text-align: right;
+        }
+    </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="PWA">
+    <link rel="icon" sizes="512x512" href="/images/icons/icon-512x512.png">
+
+    <!-- Apple splash screens -->
+    <link href="/images/icons/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1242x2208.png" media="(device-width: 621px) and (device-height: 1104px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1536x2048.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1668x2224.png" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-1668x2388.png" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+    <link href="/images/icons/splash-2048x2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" rel="apple-touch-startup-image" />
+
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/images/icons/icon-512x512.png">
+
+    <script type="text/javascript">
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/serviceworker.js', { scope: '.' })
+                .then(reg => console.log('ServiceWorker registration successful with scope: ', reg.scope))
+                .catch(err => console.log('ServiceWorker registration failed: ', err));
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+
+    <!-- Page Loader -->
+    <div class="page-loading active">
+        <div class="page-loading-inner">
+            <div class="loading-container">
+                <div class="loading-animation">
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="circle"></div>
+                    <div class="core"></div>
+                </div>
+                <div class="text">swiftcaptial Banking</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden" x-data="{sidebarOpen: false, mobileMenuOpen: false, userDropdownOpen: false, notificationsOpen: false, cardModalOpen: false, selectedCard: null, cardFlipped: false}">
+
+        <!-- Sidebar - Desktop -->
+        <div class="hidden md:flex md:w-64 md:flex-col bg-white h-full border-r border-gray-200 shadow-sm">
+            <div class="flex flex-col flex-grow pt-5 pb-4 overflow-y-auto">
+                <!-- Logo -->
+                <div class="flex items-center justify-center flex-shrink-0 px-4 mb-6">
+                    <a href="/dashboard" class="flex items-center">
+                        <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-10 w-auto">
+                    </a>
+                </div>
+
+                <!-- User Info Card -->
+                <div class="px-4 mb-6">
+                    <div class="bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center mb-3">
+                            <div class="flex-shrink-0 mr-3">
+                                <img 
+                                    src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                    class="h-10 w-10 rounded-full object-cover border-2 border-primary-100"
+                                    alt="<%= user.firstname %> <%= user.lastname %>"
+                                    onerror="this.src='https://ui-avatars.com/api/?name=<%= user.firstname %>+<%= user.lastname %>&background=random'"
+                                >
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    <%= user.firstname %> <%= user.lastname %>
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                    ID: <%= user._id %>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- KYC Link -->
+                        <div class="mb-3">
+                            <a href="/verify-account" class="flex items-center justify-center py-1 rounded-md bg-red-50 border border-red-100 hover:bg-red-100 transition-colors">
+                                <span class="text-xs text-red-800 font-medium flex items-center">
+                                    <i data-lucide="alert-circle" class="h-3 w-3 mr-1"></i> Verify KYC
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <a href="/account-settings" class="flex-1 inline-flex justify-center items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                <i data-lucide="user" class="h-3 w-3 mr-1"></i> Profile
+                            </a>
+                            <a href="/logout" class="flex-1 inline-flex justify-center items-center px-2.5 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-primary-600 hover:bg-primary-700">
+                                <i data-lucide="log-out" class="h-3 w-3 mr-1"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu Items -->
+                <nav class="flex-1 px-4 space-y-1">
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">Main Menu</p>
+                    <a href="/dashboard" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="home" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Dashboard
+                    </a>
+                    <a href="/accounthistory/<%= user._id %>" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="activity" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Transactions
+                    </a>
+                    <a href="/cards" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg bg-primary-50 text-black border-l-4 border-primary-500 pl-2">
+                        <i data-lucide="credit-card" class="mr-3 h-5 w-5 text-black"></i>
+                        Cards
+                    </a>
+
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">Transfers</p>
+                    <a href="/localtransfer" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="send" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Local Transfer
+                    </a>
+                    <a href="/internationaltransfer" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="globe" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        International Wire
+                    </a>
+                    <a href="/deposits" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="download" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Deposit
+                    </a>
+
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">Services</p>
+                    <a href="/loan" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="credit-card" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Loan Request
+                    </a>
+                    <a href="/irs-refund" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="receipt" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        IRS Tax Refund
+                    </a>
+                    <a href="/viewloan/<%= user._id %>" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="history" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Loan History
+                    </a>
+
+                    <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">Account</p>
+                    <a href="/account-settings" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="settings" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Settings
+                    </a>
+                    <a href="/support" class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i data-lucide="help-circle" class="mr-3 h-5 w-5 text-gray-500"></i>
+                        Support Ticket
+                    </a>
+                </nav>
+            </div>
+
+            <!-- App Version -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i data-lucide="shield-check" class="h-4 w-4 text-green-500 mr-2"></i>
+                        <span class="text-xs text-gray-500">Secure Banking</span>
+                    </div>
+                    <span class="text-xs text-gray-400">v1.2.0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex flex-col flex-1 overflow-hidden">
+
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm z-20">
+                <div class="flex items-center justify-between px-4 py-3">
+                    <!-- Mobile: Logo + Menu button -->
+                    <div class="flex items-center md:hidden">
+                        <button 
+                            @click="sidebarOpen = false; mobileMenuOpen = !mobileMenuOpen" 
+                            type="button" 
+                            class="text-gray-500 hover:text-gray-600 focus:outline-none"
+                            aria-label="Toggle menu">
+                            <i data-lucide="menu" class="h-6 w-6"></i>
+                        </button>
+                        <a href="/dashboard" class="ml-4">
+                            <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-8 w-auto">
+                        </a>
+                    </div>
+
+                    <!-- Desktop: Date -->
+                    <div class="hidden md:flex md:flex-1 md:items-center">
+                        <div class="text-sm text-gray-600 flex items-center">
+                            <i data-lucide="calendar" class="h-4 w-4 mr-2 text-gray-400"></i>
+                            <span id="current-date">Tuesday, January 20, 2026</span>
+                        </div>
+                    </div>
+
+                    <!-- Right Nav -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Balance (desktop) -->
+                        <div class="hidden md:flex items-center px-3 py-1.5 bg-primary-50 rounded-full">
+                            <i data-lucide="wallet" class="h-4 w-4 text-gray-900 mr-2"></i>
+                            <span class="text-sm font-medium text-gray-900">
+                                <%= user.currency %> <%= user.balance %>
+                            </span>
+                        </div>
+
+                      
+
+                        <!-- User Dropdown -->
+                        <div class="relative">
+                            <button 
+                                @click="userDropdownOpen = !userDropdownOpen; notificationsOpen = false" 
+                                class="flex items-center max-w-xs text-sm rounded-full focus:outline-none" 
+                                id="user-menu-button" 
+                                aria-expanded="false" 
+                                aria-haspopup="true">
+                                <span class="sr-only">Open user menu</span>
+                                <img 
+                                    class="h-8 w-8 rounded-full object-cover border-2 border-gray-200" 
+                                    src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                    alt="<%= user.firstname %> <%= user.lastname %>"
+                                    onerror="this.src='https://ui-avatars.com/api/?name=<%= user.firstname %>+<%= user.lastname %>&background=random'"
+                                >
+                            </button>
+
+                            <div 
+                                x-show="userDropdownOpen" 
+                                @click.away="userDropdownOpen = false" 
+                                class="origin-top-right absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                role="menu" 
+                                aria-orientation="vertical" 
+                                aria-labelledby="user-menu-button"
+                                tabindex="-1"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95">
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-900"><%= user.firstname %> <%= user.lastname %></p>
+                                    <p class="text-xs text-gray-500 mt-1">ID: <%= user._id %></p>
+                                    <div class="mt-2">
+                                        <a href="/verify-account" class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 hover:bg-red-200 flex items-center w-max">
+                                            <i data-lucide="alert-circle" class="h-3 w-3 mr-1"></i> Verify Account
+                                        </a>
+                                    </div>
+                                </div>
+                                <a href="/support" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center" role="menuitem">
+                                    <i data-lucide="help-circle" class="h-4 w-4 mr-3 text-gray-500"></i> Support Ticket
+                                </a>
+                                <a href="/account-settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center" role="menuitem">
+                                    <i data-lucide="user" class="h-4 w-4 mr-3 text-gray-500"></i> My Profile
+                                </a>
+                                <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center" role="menuitem">
+                                    <i data-lucide="log-out" class="h-4 w-4 mr-3 text-gray-500"></i> Sign Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Menu Popup -->
+            <div 
+                x-show="mobileMenuOpen" 
+                class="fixed inset-0 flex items-center justify-center z-40 md:hidden"
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-90"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition-all ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-90">
+                <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" @click="mobileMenuOpen = false" aria-hidden="true"></div>
+                <div class="relative w-11/12 max-w-md bg-white rounded-2xl shadow-2xl p-5 z-50">
+                    <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-500" @click="mobileMenuOpen = false">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+
+                    <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
+                        <div class="flex-shrink-0 mr-3">
+                            <img 
+                                src="<%= user.image || 'https://ui-avatars.com/api/?name=' + user.firstname + '+' + user.lastname + '&background=random' %>" 
+                                alt="<%= user.firstname %> <%= user.lastname %>"
+                                onerror="this.src='https://ui-avatars.com/api/?name=<%= user.firstname %>+<%= user.lastname %>&background=random'"
+                                class="h-12 w-12 rounded-full object-cover border-2 border-primary-100">
+                        </div>
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-900"><%= user.firstname %> <%= user.lastname %></h2>
+                            <p class="text-sm text-gray-500">Account: <%= user.account_no %></p>
+                            <div class="mt-1">
+                                <span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800 inline-flex items-center">
+                                    <i data-lucide="clock" class="h-3 w-3 mr-1"></i> Under Review
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-5">
+                        <h2 class="text-xl font-bold text-gray-800">Banking Menu</h2>
+                        <p class="text-sm text-gray-500">Select an option to continue</p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3">
+                        <a href="/dashboard" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="home" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Home</span>
+                            </div>
+                        </a>
+                        <a href="/accounthistory/<%= user._id %>" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="activity" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Activity</span>
+                            </div>
+                        </a>
+                        <a href="/cards" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="credit-card" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Cards</span>
+                            </div>
+                        </a>
+                        <a href="/localtransfer" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="send" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Transfer</span>
+                            </div>
+                        </a>
+                        <a href="/internationaltransfer" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="globe" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Int'l Wire</span>
+                            </div>
+                        </a>
+                        <a href="/deposits" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="download" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Deposit</span>
+                            </div>
+                        </a>
+                        <a href="/loan" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="credit-card" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Loan</span>
+                            </div>
+                        </a>
+                        <a href="/irs-refund" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="receipt" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">IRS Refund</span>
+                            </div>
+                        </a>
+                        <a href="/account-settings" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="settings" class="h-5 w-5 text-black"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Settings</span>
+                            </div>
+                        </a>
+                        <a href="/support" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-secondary-50 to-secondary-100 hover:from-secondary-100 hover:to-secondary-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="help-circle" class="h-5 w-5 text-secondary-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Support</span>
+                            </div>
+                        </a>
+                        <a href="/logout" class="group">
+                            <div class="aspect-square flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-accent-50 to-accent-100 hover:from-accent-100 hover:to-accent-200 transition-all duration-300 p-2">
+                                <div class="h-10 w-10 rounded-full bg-white flex items-center justify-center mb-1 shadow-sm group-hover:shadow transition-all">
+                                    <i data-lucide="log-out" class="h-5 w-5 text-accent-600"></i>
+                                </div>
+                                <span class="text-xs font-medium text-gray-700">Logout</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Bottom Navigation -->
+            <div class="fixed bottom-0 left-0 right-0 md:hidden z-30">
+                <div class="bg-white border-t border-gray-200 shadow-lg rounded-t-3xl mx-2 mb-1">
+                    <div class="flex justify-between items-center px-6 py-3 relative">
+                        <a href="/dashboard" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="home" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">Home</span>
+                        </a>
+                        <a href="/accounthistory/<%= user._id %>" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="bar-chart-2" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">Stats</span>
+                        </a>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-0">
+                            <button 
+                                @click="mobileMenuOpen = true" 
+                                class="bg-gradient-to-r from-primary-600 to-primary-800 w-16 h-16 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                                <i data-lucide="grid" class="h-8 w-8 text-white"></i>
+                            </button>
+                        </div>
+                        <a href="/cards" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="credit-card" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">Cards</span>
+                        </a>
+                        <a href="/account-settings" class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center">
+                                <i data-lucide="user" class="h-5 w-5 text-gray-500"></i>
+                            </div>
+                            <span class="text-xs font-medium text-gray-500">Profile</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto pb-16 md:pb-0">
+                <div class="py-6">
+                    <div class="max-w-8xl mx-auto px-4 sm:px-6 md:px-8">
+
+                        <!-- Breadcrumbs + Title -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <a href="/dashboard" class="hover:text-primary-600">Dashboard</a>
+                                        <i data-lucide="chevron-right" class="h-4 w-4 mx-2"></i>
+                                        <span class="font-medium text-gray-700">Cards</span>
+                                    </div>
+                                    <h1 class="text-2xl font-bold text-gray-900 mt-1">Virtual Cards</h1>
+                                </div>
+
+                                <% if (stats.pendingCount === 0 && stats.activeCount === 0) { %>
+                                    <a href="/apply" class="inline-flex items-center px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                                        <i data-lucide="plus" class="h-4 w-4 mr-2"></i> Apply for Card
+                                    </a>
+                                <% } else { %>
+                                    <button disabled class="inline-flex items-center px-5 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-600 bg-gray-100 cursor-not-allowed">
+                                        <i data-lucide="clock" class="h-4 w-4 mr-2"></i>
+                                        <%= stats.pendingCount > 0 ? 'Application Pending' : 'Card Active' %>
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                            <!-- Active Cards -->
+                            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow transition-shadow">
+                                <div class="p-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
+                                            <i data-lucide="credit-card" class="h-6 w-6 text-green-600"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-500">Active Cards</p>
+                                            <p class="text-3xl font-bold text-gray-900 mt-1"><%= stats.activeCount %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pending Applications -->
+                            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow transition-shadow">
+                                <div class="p-6">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-yellow-100 rounded-full p-3">
+                                            <i data-lucide="clock" class="h-6 w-6 text-yellow-600"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-500">Pending Applications</p>
+                                            <p class="text-3xl font-bold text-gray-900 mt-1"><%= stats.pendingCount %></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Card Balance + Swap -->
+                            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow transition-shadow">
+                                <div class="p-6">
+                                    <div class="flex items-center justify-between flex-wrap gap-4">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                                                <i data-lucide="wallet" class="h-6 w-6 text-blue-600"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <p class="text-sm font-medium text-gray-500">Total Card Balance</p>
+                                                <p class="text-3xl font-bold text-gray-900 mt-1">
+                                                    <%= user.currency %> <%= stats.totalCardBalance %>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <% if (parseFloat(stats.totalCardBalance) > 0) { %>
+                                            <button 
+                                                onclick="swapBalance()"
+                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                                                <i data-lucide="refresh-cw" class="h-4 w-4 mr-2"></i> Swap to Main
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Listings / No Cards -->
+                        <% if (cards.length === 0) { %>
+                            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 mb-8">
+                                <div class="border-b border-gray-200 px-6 py-4">
+                                    <h2 class="text-lg font-medium text-gray-900">Your Cards</h2>
+                                </div>
+                                <div class="p-12 text-center">
+                                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-gray-100 mb-4">
+                                        <i data-lucide="credit-card" class="h-8 w-8 text-gray-400"></i>
+                                    </div>
+                                    <h3 class="text-xl font-medium text-gray-900 mb-2">No cards yet</h3>
+                                    <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                                        You haven't applied for any virtual cards yet. Apply now to get started with secure online payments.
+                                    </p>
+                                    <% if (stats.pendingCount === 0 && stats.activeCount === 0) { %>
+                                        <a href="/apply" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700">
+                                            Apply for Card
+                                        </a>
+                                    <% } else { %>
+                                        <button disabled class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-600 bg-gray-100 cursor-not-allowed">
+                                            Application <%= stats.pendingCount > 0 ? 'Pending' : 'Active' %>
+                                        </button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                                <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                                    <h2 class="text-lg font-medium text-gray-900">Your Cards</h2>
+                                    <% if (stats.pendingCount === 0 && stats.activeCount === 0) { %>
+                                        <a href="/apply" class="text-sm text-primary-600 hover:text-primary-800 flex items-center">
+                                            <i data-lucide="plus-circle" class="h-4 w-4 mr-1"></i> New Card
+                                        </a>
+                                    <% } %>
+                                </div>
+                                <div class="divide-y divide-gray-200">
+                                    <% cards.forEach(card => { %>
+                                        <div 
+                                            class="p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:bg-gray-50 transition cursor-pointer"
+                                            @click="selectedCard = { 
+                                                cardType: '<%= card.cardType %>', 
+                                                cardNumber: '<%= card.cardNumber %>', 
+                                                cardHolderName: '<%= card.cardHolderName %>', 
+                                                expiryDate: '<%= card.expiryDate %>', 
+                                                cvv: '<%= card.cvv %>', 
+                                                currency: '<%= card.currency %>', 
+                                                balance: '<%= card.balance.toFixed(2) %>',
+                                                status: '<%= card.status %>'
+                                            }; cardModalOpen = true; cardFlipped = false;"
+                                        >
+                                            <div class="flex items-center">
+                                                <div class="h-14 w-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center text-white font-mono text-lg font-bold shadow-inner">
+                                                    <%= card.cardType.toUpperCase() %>
+                                                </div>
+                                                <div class="ml-5">
+                                                    <p class="font-semibold text-gray-900"><%= card.cardHolderName %></p>
+                                                    <p class="text-sm text-gray-500 font-mono">
+                                                        •••• •••• •••• <%= card.cardNumber.slice(-4) %>
+                                                    </p>
+                                                    <p class="text-xs text-gray-400 mt-1">
+                                                        Expires <%= card.expiryDate %>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-2xl font-bold text-gray-900">
+                                                    <%= card.currency %> <%= card.balance.toFixed(2) %>
+                                                </p>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2
+                                                    <%= card.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                                        card.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                                        'bg-gray-100 text-gray-800' %>">
+                                                    <%= card.status.charAt(0).toUpperCase() + card.status.slice(1) %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+
+                        <!-- How It Works -->
+                        <div class="mb-8">
+                            <h2 class="text-xl font-bold text-gray-900 mb-6">How Virtual Cards Work</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 mb-4">
+                                        <i data-lucide="file-text" class="h-6 w-6 text-gray-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">1. Apply</h3>
+                                    <p class="text-gray-600">Complete the application form for your virtual card. Select your preferred card type and set your spending limits.</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 mb-4">
+                                        <i data-lucide="check-circle" class="h-6 w-6 text-gray-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">2. Activate</h3>
+                                    <p class="text-gray-600">Once approved, your virtual card will be ready to use. View the card details and activate it from your dashboard.</p>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                                    <div class="flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 mb-4">
+                                        <i data-lucide="shopping-cart" class="h-6 w-6 text-gray-600"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">3. Use</h3>
+                                    <p class="text-gray-600">Use your virtual card for online transactions anywhere major credit cards are accepted. Monitor transactions in real-time.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAQ -->
+                        <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                            <div class="border-b border-gray-200 px-6 py-4">
+                                <h2 class="text-lg font-medium text-gray-900">Frequently Asked Questions</h2>
+                            </div>
+                            <div class="p-6">
+                                <dl class="space-y-6">
+                                    <div>
+                                        <dt class="text-base font-medium text-gray-900">What is a virtual card?</dt>
+                                        <dd class="mt-2 text-sm text-gray-600">A virtual card is a digital payment card that can be used for online transactions. It works just like a physical card but exists only in digital form, providing enhanced security for online purchases.</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-base font-medium text-gray-900">How secure are virtual cards?</dt>
+                                        <dd class="mt-2 text-sm text-gray-600">Virtual cards offer additional security as they're separate from your primary account. You can create cards with specific spending limits and even create single-use cards for enhanced protection against fraud.</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-base font-medium text-gray-900">Can I have multiple virtual cards?</dt>
+                                        <dd class="mt-2 text-sm text-gray-600">Yes, you can apply for multiple virtual cards for different purposes - such as one for subscriptions, another for shopping, etc. Each card can have its own limits and settings.</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-base font-medium text-gray-900">How long does it take to get a virtual card?</dt>
+                                        <dd class="mt-2 text-sm text-gray-600">Virtual cards are typically issued within minutes after approval. Once approved, you can immediately view and use the card details for online transactions.</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-200 hidden md:block">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 md:flex md:items-center md:justify-between">
+                    <div class="flex items-center">
+                        <img src="storage/app/public/photos/I98wEMilPMHkNy8wxBtJ86dmMTWl2kK4kkPJNI9l.png" alt="Logo" class="h-6 w-auto mr-2">
+                        <p class="text-sm text-gray-500">© 2026 swiftcaptial. All rights reserved.</p>
+                    </div>
+                    <div class="flex space-x-6 mt-4 md:mt-0">
+                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Privacy Policy</a>
+                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700">Terms of Service</a>
+                        <a href="/support" class="text-sm text-gray-500 hover:text-gray-700">Contact Support</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Card Detail Modal -->
+        <div 
+            x-show="cardModalOpen" 
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4"
+            @click="cardModalOpen = false"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+        >
+            <div 
+                @click.stop 
+                class="relative max-w-lg w-full"
+                x-transition:enter="transition ease-out duration-300 transform"
+                x-transition:enter-start="scale-95 opacity-0"
+                x-transition:enter-end="scale-100 opacity-100"
+                x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="scale-100 opacity-100"
+                x-transition:leave-end="scale-95 opacity-0"
+            >
+                <!-- Close button -->
+                <button 
+                    @click="cardModalOpen = false" 
+                    class="absolute -top-12 right-0 text-white hover:text-gray-300 z-10"
+                >
+                    <i data-lucide="x-circle" class="h-8 w-8"></i>
+                </button>
+
+                <!-- Credit Card Container -->
+                <div 
+                    class="credit-card"
+                    :class="{ 'card-flipped': cardFlipped }"
+                >
+                    <div class="card-inner">
+                        <!-- Front -->
+                        <div class="card-face card-front">
+                            <div class="card-logo">swiftcaptial</div>
+                            <div class="chip"></div>
+                            <div class="card-number" x-text="selectedCard?.cardNumber?.replace(/(\d{4})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4') || '•••• •••• •••• ••••'"></div>
+
+                            <!-- Bottom row: holder name + expiry in straight line -->
+                            <div class="card-bottom-row">
+                                <div class="card-holder-section">
+                                    <div class="card-holder-label">CARDHOLDER</div>
+                                    <div class="holder-name" x-text="selectedCard?.cardHolderName || 'FULL NAME'"></div>
+                                </div>
+                                <div class="card-expiry-section text-right">
+                                    <div class="card-expiry-label">EXPIRES END</div>
+                                    <div class="expiry-date" x-text="selectedCard?.expiryDate || 'MM/YY'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Back -->
+                        <div class="card-face card-back">
+                            <div class="magnetic-stripe"></div>
+                            <div class="signature-panel relative">
+                                <div class="cvv-box" x-text="selectedCard?.cvv || '***'"></div>
+                            </div>
+                            <div class="issuer-text">
+                                For customer service call +1-XXX-XXXXXXX<br>
+                                or visit www.swiftcaptial.com
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flip Button -->
+                <div class="text-center mt-8">
+                    <button 
+                        @click="cardFlipped = !cardFlipped"
+                        class="inline-flex items-center px-8 py-4 bg-gray-900 text-white text-lg font-medium rounded-xl hover:bg-gray-800 transition shadow-lg"
+                    >
+                        <span x-show="!cardFlipped">Show Back (CVV & Signature)</span>
+                        <span x-show="cardFlipped">Show Front</span>
+                        <i data-lucide="refresh-cw" class="h-6 w-6 ml-3"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+document.getElementById('current-date').textContent = 
+    new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+</script>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        window.onload = function() {
+            const preloader = document.querySelector('.page-loading');
+            setTimeout(() => {
+                preloader.classList.remove('active');
+                setTimeout(() => preloader.remove(), 500);
+            }, 800);
+        };
+
+        // Swap balance function
+        async function swapBalance() {
+            const { value: amount } = await Swal.fire({
+                title: 'Transfer to Main Balance',
+                input: 'number',
+                inputLabel: 'Amount to transfer',
+                inputValue: '<%= stats.totalCardBalance %>',
+                inputAttributes: {
+                    min: '0.01',
+                    max: '<%= stats.totalCardBalance %>',
+                    step: '0.01'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Transfer',
+                confirmButtonColor: '#0ea5e9',
+                preConfirm: (val) => {
+                    if (!val || val <= 0) {
+                        Swal.showValidationMessage('Please enter a valid amount');
+                        return false;
+                    }
+                    return val;
+                }
+            });
+
+            if (!amount) return;
+
+            Swal.fire({
+                title: 'Processing...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const res = await fetch('/cards/swap-balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ amount: parseFloat(amount) })
+                });
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Transfer failed');
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Balance transferred successfully.',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.message || 'Failed to transfer balance. Please try again.',
+                    confirmButtonColor: '#0ea5e9'
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
