@@ -268,8 +268,6 @@
                             </span>
                         </div>
 
-                       
-
                         <div class="relative">
                             <button 
                                 @click="userDropdownOpen = !userDropdownOpen; notificationsOpen = false" 
@@ -485,7 +483,9 @@
     Description: '',
     isSubmitting: false,
     showPreview: false,
-    
+    accountLookupStatus: '', // 'loading' | 'found' | 'notfound' | ''
+    lookupTimer: null,
+
     get currentBalance() {
         return this.transferFrom === 'btc' 
             ? <%= user.btcBalance || 0 %> 
@@ -497,8 +497,48 @@
         if (parseFloat(this.amount) > max) this.amount = max.toString();
     },
 
+    async lookupAccount() {
+        if (this.transferFrom !== 'usd') {
+            this.accountname = '';
+            this.accountLookupStatus = '';
+            return;
+        }
+        clearTimeout(this.lookupTimer);
+        const acc = this.accountnumber.trim();
+        if (!acc || acc.length < 6) {
+            this.accountname = '';
+            this.accountLookupStatus = '';
+            return;
+        }
+        this.accountLookupStatus = 'loading';
+        this.lookupTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/check-account-number?accountnumber=${encodeURIComponent(acc)}`);
+                const data = await res.json();
+                if (data.found) {
+                    this.accountname = data.name;
+                    this.accountLookupStatus = 'found';
+                } else {
+                    this.accountname = '';
+                    this.accountLookupStatus = 'notfound';
+                }
+            } catch (e) {
+                this.accountname = '';
+                this.accountLookupStatus = 'notfound';
+            }
+        }, 450);
+    },
+
     async submitForm() {
         if (this.isSubmitting) return;
+        if (this.transferFrom === 'usd' && this.accountLookupStatus !== 'found') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Account',
+                text: 'Please enter a valid account number that exists in our system.'
+            });
+            return;
+        }
         this.isSubmitting = true;
 
         const formData = new FormData();
@@ -506,7 +546,7 @@
         formData.append('transferFrom', this.transferFrom);
         formData.append('accountname', this.accountname);
         formData.append('accountnumber', this.accountnumber);
-        formData.append('bankname', this.bankname);
+        formData.append('bankname', this.bankname || 'Internal');
         formData.append('Accounttype', this.Accounttype);
         formData.append('Description', this.Description);
         formData.append('pin', this.pin);
@@ -527,9 +567,7 @@
                     timer: 4000,
                     showConfirmButton: false
                 }).then(() => {
-                    // ──── CHANGED HERE ────
                     window.location.href = `/verify-transfer-otp/<%= user._id %>`;
-                    // ──────────────────────
                 });
             } else {
                 Swal.fire({
@@ -589,7 +627,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-2">
                                                     <label class="text-sm text-gray-600">Source:</label>
-                                                    <select x-model="transferFrom" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                                    <select x-model="transferFrom" @change="lookupAccount()" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
                                                         <option value="usd">USD</option>
                                                         <option value="btc">BTC</option>
                                                     </select>
@@ -637,22 +675,7 @@
 
                                             <div class="bg-white rounded-xl border border-gray-200 p-5">
                                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                                    <div>
-                                                        <label for="accountname" class="block text-sm font-medium text-gray-700 mb-1">Beneficiary Account Name</label>
-                                                        <div class="relative">
-                                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                                <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
-                                                            </div>
-                                                            <input 
-                                                                type="text" 
-                                                                x-model="accountname"
-                                                                class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-                                                                placeholder="Enter beneficiary's full name"
-                                                                required
-                                                            />
-                                                        </div>
-                                                    </div>
-
+                                                    <!-- Account Number (triggers lookup) -->
                                                     <div>
                                                         <label for="accountnumber" class="block text-sm font-medium text-gray-700 mb-1">Beneficiary Account Number</label>
                                                         <div class="relative">
@@ -662,11 +685,36 @@
                                                             <input 
                                                                 type="text" 
                                                                 x-model="accountnumber"
+                                                                @input="lookupAccount()"
                                                                 class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
                                                                 placeholder="Enter account number"
                                                                 required
                                                             />
                                                         </div>
+                                                    </div>
+
+                                                    <!-- Read-only Beneficiary Name (auto-filled) -->
+                                                    <div>
+                                                        <label class="block text-sm font-medium text-gray-700 mb-1">Beneficiary Account Name</label>
+                                                        <div class="relative">
+                                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <i data-lucide="user" class="h-5 w-5 text-gray-400"></i>
+                                                            </div>
+                                                            <input 
+                                                                type="text" 
+                                                                x-model="accountname"
+                                                                readonly
+                                                                class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none cursor-not-allowed"
+                                                                :placeholder="transferFrom === 'usd' ? (accountLookupStatus === 'loading' ? 'Looking up...' : (accountLookupStatus === 'notfound' ? 'Account not found' : 'Account name will appear here')) : 'N/A for BTC transfers'"
+                                                            />
+                                                        </div>
+                                                        <p class="mt-1 text-xs" 
+                                                           :class="accountLookupStatus === 'found' ? 'text-green-600' : (accountLookupStatus === 'notfound' ? 'text-red-600' : 'text-gray-500')"
+                                                           x-show="transferFrom === 'usd'">
+                                                            <span x-show="accountLookupStatus === 'found'">✓ Account verified</span>
+                                                            <span x-show="accountLookupStatus === 'notfound'">✗ Account not found in our system</span>
+                                                            <span x-show="accountLookupStatus === 'loading'">Searching...</span>
+                                                        </p>
                                                     </div>
                                                 </div>
 
@@ -681,8 +729,7 @@
                                                                 type="text" 
                                                                 x-model="bankname"
                                                                 class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-                                                                placeholder="Enter bank name"
-                                                                required
+                                                                placeholder="Enter bank name (optional for internal)"
                                                             />
                                                         </div>
                                                     </div>
@@ -809,7 +856,7 @@
                                                 type="button"
                                                 @click="showPreview = true"
                                                 class="w-full mb-3 sm:mb-0 inline-flex items-center justify-center px-6 py-3.5 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                :disabled="isSubmitting || !amount || !accountname || !accountnumber || !bankname || !pin"
+                                                :disabled="isSubmitting || !amount || !accountnumber || !pin || (transferFrom === 'usd' && accountLookupStatus !== 'found')"
                                             >
                                                 <i data-lucide="eye" class="h-5 w-5 mr-2"></i>
                                                 Preview Transfer
@@ -868,7 +915,7 @@
                                                     </div>
                                                     <div class="flex justify-between text-sm">
                                                         <dt class="font-medium text-gray-500">Recipient</dt>
-                                                        <dd class="text-gray-900" x-text="accountname"></dd>
+                                                        <dd class="text-gray-900" x-text="accountname || '—'"></dd>
                                                     </div>
                                                     <div class="flex justify-between text-sm">
                                                         <dt class="font-medium text-gray-500">Account Number</dt>
@@ -876,7 +923,7 @@
                                                     </div>
                                                     <div class="flex justify-between text-sm">
                                                         <dt class="font-medium text-gray-500">Bank</dt>
-                                                        <dd class="text-gray-900" x-text="bankname"></dd>
+                                                        <dd class="text-gray-900" x-text="bankname || 'Internal'"></dd>
                                                     </div>
                                                     <div class="flex justify-between text-sm">
                                                         <dt class="font-medium text-gray-500">Account Type</dt>
@@ -909,7 +956,10 @@
 >
     <span x-show="!isSubmitting">Confirm Transfer</span>
     <span x-show="isSubmitting" class="flex items-center">
-        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" ...></svg>
+        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
         Processing...
     </span>
 </button>
