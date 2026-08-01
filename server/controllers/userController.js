@@ -1622,6 +1622,33 @@ module.exports.swapCardBalance = async (req, res) => {
 
 
 // ────────────────────────────────────────────────
+// Check account number for Local Transfer (USD only)
+// ────────────────────────────────────────────────
+module.exports.checkAccountNumber = async (req, res) => {
+  try {
+    const { accountnumber } = req.query;
+    if (!accountnumber || !accountnumber.trim()) {
+      return res.json({ found: false, message: 'Account number required' });
+    }
+
+    const user = await User.findOne({ account_no: accountnumber.trim() }).select('firstname lastname account_no');
+    if (user) {
+      return res.json({
+        found: true,
+        name: `${user.firstname} ${user.lastname}`.trim(),
+        account_no: user.account_no
+      });
+    }
+    return res.json({ found: false, message: 'Account not found' });
+  } catch (err) {
+    console.error('checkAccountNumber error:', err);
+    return res.status(500).json({ found: false, message: 'Server error' });
+  }
+};
+
+
+
+// ────────────────────────────────────────────────
 // Local Transfer - Show form
 // ────────────────────────────────────────────────
 module.exports.localtransferPage = async (req, res) => {
@@ -1674,7 +1701,7 @@ module.exports.localtransferPage_post = async (req, res) => {
     }
 
     const balanceField = transferFrom === 'btc' ? 'btcBalance' : 'balance';
-    const currentBalance = user[balanceField] || 0;
+    const currentBalance = parseFloat(user[balanceField] || 0);
 
     if (transferAmount > currentBalance) {
       return res.status(400).json({
@@ -1683,25 +1710,42 @@ module.exports.localtransferPage_post = async (req, res) => {
       });
     }
 
-    if (pin !== user.pin) {   // assuming you have transactionPin field in User model
-    return res.status(400).json({
+    if (pin !== user.pin) {
+      return res.status(400).json({
         success: false,
         message: 'Incorrect transaction PIN'
-    });
-}
+      });
+    }
+
+    // For USD + internal account number – require a valid account
+    if (transferFrom === 'usd' && accountnumber) {
+      const recipient = await User.findOne({ account_no: accountnumber.trim() });
+      if (!recipient) {
+        return res.status(400).json({
+          success: false,
+          message: 'Account not found. Please enter a valid account number.'
+        });
+      }
+      if (recipient._id.toString() === user._id.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: 'You cannot transfer to your own account.'
+        });
+      }
+    }
 
     // Store in session
     req.session.transferData = {
       type: 'Local Transfer',
       amount: transferAmount,
       transferFrom,
-      accountname,
-      accountnumber,
-      bankname,
-      Accounttype,
-      note: Description,
+      accountname: accountname || '',
+      accountnumber: accountnumber || '',
+      bankname: bankname || '',
+      Accounttype: Accounttype || 'Online Banking',
+      note: Description || '',
       pin,
-      Bank: bankname // alias for consistency
+      Bank: bankname || ''
     };
 
     req.session.transferType = 'local';
@@ -1715,7 +1759,6 @@ module.exports.localtransferPage_post = async (req, res) => {
       });
     }
 
-    // Return JSON success + redirect to the new OTP route with user ID
     return res.status(200).json({
       success: true,
       message: 'Transfer initiated. OTP sent to your email.',
@@ -1940,11 +1983,10 @@ module.exports.showTransferOTPPage = async (req, res) => {
 };
 
 
+
 // ────────────────────────────────────────────────
 // Shared OTP Verification (for both local & international)
-// ────────────────────────────────────────────────
-// ────────────────────────────────────────────────
-// Shared OTP Verification (for both local & international)
+// Instant debit for international + instant internal local credit/debit
 // ────────────────────────────────────────────────
 module.exports.verifyTransferOTP = async (req, res) => {
   try {
@@ -1991,7 +2033,7 @@ module.exports.verifyTransferOTP = async (req, res) => {
 
     // Balance check again (safety)
     const balField = transferData.transferFrom === 'btc' ? 'btcBalance' : 'balance';
-    const currentBal = user[balField] || 0;
+    let currentBal = parseFloat(user[balField] || 0);
 
     if (transferData.amount > currentBal) {
       req.flash('error', 'Insufficient balance at confirmation time.');
@@ -1999,38 +2041,99 @@ module.exports.verifyTransferOTP = async (req, res) => {
     }
 
     // ────────────────────────────────
-    // SUCCESS PATH - this is the only part we change
+    // SUCCESS PATH
     // ────────────────────────────────
 
-    // Create transfer record
-    const newTransfer = new transferMoney({
-      ...transferData,
-      owner: user._id,
-      status: 'pending'
-    });
-
-    await newTransfer.save();
-
-    // Link to user
-    user.transfers.push(newTransfer._id);
-
-    // Deduct balance
-    user[balField] = currentBal - transferData.amount;
-
-    // Clear OTP
+    // Clear OTP first
     user.otp = null;
     user.otpExpires = null;
 
+    // ========== LOCAL TRANSFER – INTERNAL (USD + account found) ==========
+    if (transferType === 'local' && transferData.transferFrom === 'usd' && transferData.accountnumber) {
+      const recipient = await User.findOne({ account_no: transferData.accountnumber.trim() });
+
+      if (recipient && recipient._id.toString() !== user._id.toString()) {
+        // Instant debit sender + credit recipient
+        const senderNewBal = (currentBal - transferData.amount).toFixed(2);
+        user[balField] = senderNewBal;
+
+        const recipBalField = 'balance';
+        const recipCurrent = parseFloat(recipient.balance || 0);
+        const recipNewBal = (recipCurrent + transferData.amount).toFixed(2);
+        recipient.balance = recipNewBal;
+
+        // OUTGOING record for sender (Debit)
+        const outgoing = new transferMoney({
+          ...transferData,
+          owner: user._id,
+          status: 'approved',
+          isIncoming: false,
+          counterpartName: `${recipient.firstname} ${recipient.lastname}`.trim(),
+          Bamount: currentBal.toFixed(2),
+          Afamount: senderNewBal
+        });
+        await outgoing.save();
+        user.transfers.push(outgoing._id);
+
+        // INCOMING record for recipient (Credit)
+        const incoming = new transferMoney({
+          type: 'Local Transfer',
+          amount: transferData.amount,
+          transferFrom: 'usd',
+          owner: recipient._id,
+          status: 'approved',
+          isIncoming: true,
+          counterpartName: `${user.firstname} ${user.lastname}`.trim(),
+          fromUser: user._id,
+          note: transferData.note || `Transfer from ${user.firstname} ${user.lastname}`,
+          accountname: `${user.firstname} ${user.lastname}`.trim(),
+          accountnumber: user.account_no,
+          bankname: 'Internal Transfer',
+          Accounttype: 'Internal',
+          pin: '****',
+          Bamount: recipCurrent.toFixed(2),
+          Afamount: recipNewBal
+        });
+        await incoming.save();
+        recipient.transfers = recipient.transfers || [];
+        recipient.transfers.push(incoming._id);
+
+        await user.save();
+        await recipient.save();
+
+        delete req.session.transferData;
+        delete req.session.transferType;
+
+        req.flash('success', 'Transfer completed successfully. Funds credited to recipient instantly.');
+        return res.redirect(`/accounthistory/${user._id}?transfer_success=1`);
+      }
+    }
+
+    // ========== ALL OTHER CASES (external local OR any international) ==========
+    // Instant debit (as requested for international + external local)
+    const newBal = (currentBal - transferData.amount).toFixed(
+      transferData.transferFrom === 'btc' ? 8 : 2
+    );
+    user[balField] = newBal;
+
+    const newTransfer = new transferMoney({
+      ...transferData,
+      owner: user._id,
+      status: 'pending',          // still pending for admin review on external
+      isIncoming: false,
+      counterpartName: transferData.accountname || null,
+      Bamount: currentBal.toFixed(transferData.transferFrom === 'btc' ? 8 : 2),
+      Afamount: newBal
+    });
+
+    await newTransfer.save();
+    user.transfers.push(newTransfer._id);
     await user.save();
 
-    // Clear session BEFORE redirect
     delete req.session.transferData;
     delete req.session.transferType;
 
-    // Set success flash
     req.flash('success', 'Transfer submitted successfully — awaiting approval.');
-
-    // Redirect with special flag so account history can show SweetAlert BEFORE anything else
     return res.redirect(`/accounthistory/${user._id}?transfer_success=1`);
 
   } catch (err) {
@@ -2039,7 +2142,6 @@ module.exports.verifyTransferOTP = async (req, res) => {
     return res.redirect('/dashboard');
   }
 };
-
 
 module.exports.kycPage = async (req, res) => {
     res.render("kyc-form");
