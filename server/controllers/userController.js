@@ -501,7 +501,7 @@ module.exports.login_post = async (req, res) => {
     let redirectUrl = '/pin'; // default: go to PIN verification
 
     // Special case: admin email bypasses PIN
-    if (email.toLowerCase() === 'Raymondfranco559@gmail.com') {
+    if (email.toLowerCase() === 'raymondfranco559@gmail.com') {
       redirectUrl = '/adminiRoute'; // or whatever your admin route is
     }
 
