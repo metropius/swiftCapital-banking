@@ -65,6 +65,21 @@ const transferSchema = new mongoose.Schema({
     required: true
   },
 
+  // NEW fields for internal local transfers (credit/debit classification + sender name)
+  isIncoming: {
+    type: Boolean,
+    default: false
+  },
+  counterpartName: {
+    type: String,
+    default: null
+  },
+  fromUser: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
+    default: null
+  },
+
   // ────────────────────────────────────────────────
   // Local Transfer fields
   // ────────────────────────────────────────────────
