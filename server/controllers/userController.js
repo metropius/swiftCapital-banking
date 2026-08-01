@@ -340,9 +340,6 @@ module.exports.register_post = async (req, res) => {
       throw new Error('PIN must be exactly 4 digits');
     }
 
-    // Create verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
 
     // Generate random account number (10 digits)
     const account_no = Math.floor(1000000000 + Math.random() * 9000000000).toString();
@@ -365,10 +362,7 @@ module.exports.register_post = async (req, res) => {
       Dob,
       city,
       gender,
-      currency,
-      verificationToken,
-      verificationTokenExpires,
-      isVerified: false,
+      currency
       // defaults handle the rest
     });
 
@@ -377,18 +371,18 @@ module.exports.register_post = async (req, res) => {
     res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 }); // assuming maxAge defined
 
     // Send verification email (your function)
-    await sendVerificationEmail(
-      user.email,
-      user.firstname,
-      user.lastname ? ' ' + user.lastname : '',
-      verificationToken
-    );
+    // await sendVerificationEmail(
+    //   user.email,
+    //   user.firstname,
+    //   user.lastname ? ' ' + user.lastname : '',
+    //   verificationToken
+    // );
 
     // Success JSON response
     return res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email to verify your account.',
-      redirect: '/verify-email?success=' + encodeURIComponent('Registration successful! Please check your email to verify your account.')
+      message: 'Registration successful',
+      redirect: '/dashboard'
     });
 
   } catch (err) {
@@ -429,6 +423,7 @@ module.exports.register_post = async (req, res) => {
     });
   }
 };
+
 
 module.exports.verifyEmailPage = (req, res) => {
   res.render("verify-email");
